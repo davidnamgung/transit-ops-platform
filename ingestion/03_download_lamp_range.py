@@ -53,3 +53,6 @@ if missing:
     (OUT_DIR / "_missing_dates.txt").write_text("\n".join(missing))
 if failed:
     print("FAILED (re-run the script to retry):", failed)
+if len(missing) > 20:
+    print(f"WARNING: {len(missing)} files not published in one run. That is unusual; "
+          "check whether the server is blocking us (HTTP 403) before trusting the gaps.")

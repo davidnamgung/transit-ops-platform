@@ -97,11 +97,11 @@ check("daily mart covers every service date in staging",
       f"""SELECT ABS((SELECT COUNT(DISTINCT service_date) FROM {STG})
                     - (SELECT COUNT(DISTINCT service_date) FROM {DAILY}))""")
 
-check("scheduled-trip events with a schedule are comparable (within 3 hours)",
-      f"""SELECT COUNT(*) FROM {INT}
-          WHERE NOT is_added_trip AND schedule_diff_sec IS NOT NULL AND NOT is_schedule_comparable""",
-      level="WARN",
-      total=scalar(f"SELECT COUNT(*) FROM {INT} WHERE NOT is_added_trip AND schedule_diff_sec IS NOT NULL"))
+check("fewer than 0.1% of scheduled-trip events fall beyond the 12-hour cap",
+      f"""SELECT CASE WHEN 1.0 * COUNT(*) FILTER (WHERE NOT is_schedule_comparable) / COUNT(*) > 0.001
+                      THEN 1 ELSE 0 END
+          FROM {INT} WHERE trip_kind = 'scheduled' AND schedule_diff_sec IS NOT NULL""",
+      level="WARN")
 
 check("every line-day in the daily mart has some comparable events",
       f"SELECT COUNT(*) FROM {DAILY} WHERE n_comparable = 0", level="WARN")

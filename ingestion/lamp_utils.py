@@ -15,8 +15,10 @@ def download(url, dest, retries=3):
     for attempt in range(1, retries + 1):
         try:
             with requests.get(url, stream=True, timeout=60) as r:
-                if r.status_code == 404:
-                    return "missing"  # not published: expected sometimes, not an error
+                # This host answers 403 (not 404) for files that do not exist, so both
+                # mean "not published". If many 403s suddenly appear, suspect blocking.
+                if r.status_code in (403, 404):
+                    return "missing"
                 r.raise_for_status()
                 size_mb = int(r.headers.get("Content-Length", 0)) / 1_000_000
                 if size_mb > MAX_MB:

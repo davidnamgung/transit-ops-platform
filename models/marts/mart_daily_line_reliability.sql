@@ -1,5 +1,6 @@
--- Mart: one row per service date and line. Feeds the trend charts and the
--- "worst days" analysis. Grain: (service_date, route_id).
+-- Mart: one row per service date and line. Grain: (service_date, route_id).
+-- Every metric is shown with its coverage, so a day where most events could
+-- not be compared never looks "perfect" by accident.
 WITH daily_weather AS (
     SELECT
         CAST(hour_local AS DATE)           AS service_date,
@@ -14,18 +15,28 @@ reliability AS (
     SELECT
         service_date,
         route_id,
-        COUNT(*)                                          AS n_events,
-        COUNT(*) FILTER (WHERE is_schedule_comparable)    AS n_comparable,
+
+        -- coverage
+        COUNT(*)                                                    AS n_events,
+        COUNT(*) FILTER (WHERE is_added_trip)                       AS n_added_events,
+        COUNT(*) FILTER (WHERE is_schedule_comparable)              AS n_comparable,
+        COUNT(*) FILTER (WHERE NOT is_added_trip
+                           AND schedule_diff_sec > 10800)           AS n_very_late_events,
+        COUNT(*) FILTER (WHERE NOT is_added_trip
+                           AND schedule_diff_sec < -10800)          AS n_very_early_events,
+        ROUND(100.0 * COUNT(*) FILTER (WHERE is_schedule_comparable)
+              / COUNT(*), 1)                                        AS pct_events_comparable,
+
+        -- metrics (comparable events only)
         ROUND(median(schedule_diff_sec / 60.0)
-              FILTER (WHERE is_schedule_comparable), 2)   AS median_schedule_diff_min,
+              FILTER (WHERE is_schedule_comparable), 2)             AS median_schedule_diff_min,
         ROUND(quantile_cont(schedule_diff_sec / 60.0, 0.9)
-              FILTER (WHERE is_schedule_comparable), 2)   AS p90_schedule_diff_min,
+              FILTER (WHERE is_schedule_comparable), 2)             AS p90_schedule_diff_min,
         ROUND(100.0 * AVG(CASE WHEN is_schedule_comparable
                                THEN CAST(ABS(schedule_diff_sec) <= 300 AS INTEGER) END), 2)
-                                                          AS pct_within_5min,
-        COUNT(headway_ratio)                              AS n_headways,
-        ROUND(100.0 * AVG(CAST(headway_ratio > 1.5 AS INTEGER)), 2)
-                                                          AS pct_headways_over_1_5x
+                                                                    AS pct_within_5min,
+        COUNT(headway_ratio)                                        AS n_headways,
+        ROUND(100.0 * AVG(CAST(headway_ratio > 1.5 AS INTEGER)), 2) AS pct_headways_over_1_5x
     FROM intermediate.int_stop_events_weather
     GROUP BY service_date, route_id
 )

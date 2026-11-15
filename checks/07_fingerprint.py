@@ -38,6 +38,7 @@ QUERIES = {
                                     ORDER BY service_date, route_id))
                                     FROM marts.mart_line_day_context""",
     "episodes": "SELECT COUNT(*) FROM marts.mart_line_episodes",
+        "duplicate groups spanning 2+ routes": "SELECT COUNT(*) FROM (SELECT 1 FROM staging.stg_lamp_stop_events GROUP BY service_date, trip_id, stop_sequence HAVING COUNT(DISTINCT route_id) > 1)",
 }
 for name, sql in QUERIES.items():
     try:

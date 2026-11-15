@@ -58,3 +58,16 @@ MassDOT Developers License Agreement.
 - Open-Meteo historical data is model reanalysis, not station measurements.
 - Weather is confounded with season and time of day (for example, snow only occurs
   in winter), so weather effects must be compared like with like.
+
+## Day types and episodes (v1, provisional thresholds)
+- Each service date and line gets one day type, first match wins:
+  - planned_closure: a long service-change alert (12+ hours, not a single-stop skip)
+    overlaps the day, and either 50%+ of events are ADDED or volume is under 80% of
+    the line's typical weekday/weekend level.
+  - disruption: 40%+ of headways exceed 1.5x scheduled, or volume is under 60% of typical.
+  - schedule_matching_gap: 90%+ of events are ADDED trips, none of the above.
+  - normal: everything else.
+- An episode is a run of consecutive days with the same non-normal type on one line.
+- Limitations: thresholds are not tuned per line (Green-D's normal long-gap share is
+  higher than Orange's); ADDED surges of 70-89% (for example Red, Jul 1-13, 2026) fall
+  below the 90% gap threshold; alerts explain closures much better than disruptions.

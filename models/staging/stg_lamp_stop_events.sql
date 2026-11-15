@@ -1,6 +1,7 @@
 -- Staging model: one row per train stop event, cleaned and typed.
--- Changes in this version: adds schedule_diff_sec and key_row_number (flags,
--- not deletions).
+-- Flags rather than deletes: schedule_diff_sec, trip_kind, key_row_number.
+-- Reads every raw LAMP file. union_by_name = true means files with slightly
+-- different columns still combine instead of failing.
 WITH raw AS (
     SELECT
         *,
@@ -21,8 +22,8 @@ typed AS (
         trip_id,
         trip_id LIKE 'ADDED%'                         AS is_added_trip,
         CASE WHEN trip_id LIKE 'ADDED%'  THEN 'added'
-        WHEN trip_id LIKE 'NONREV%' THEN 'nonrevenue'
-        ELSE 'scheduled' END                     AS trip_kind,
+             WHEN trip_id LIKE 'NONREV%' THEN 'nonrevenue'
+             ELSE 'scheduled' END                     AS trip_kind,
         vehicle_id,
         vehicle_label,
         len(string_split(vehicle_consist, '|'))       AS n_cars,
@@ -69,11 +70,16 @@ SELECT
     -- Positive = later than scheduled. A neutral name: we have not yet
     -- verified whether stop_ts is an arrival or a departure time.
     epoch(stop_ts_utc) - epoch(scheduled_arrival_ts_utc)   AS schedule_diff_sec,
-    -- 1 = first row for this (service_date, trip, stop_sequence); 2+ are set aside.
+    -- 1 = the row we keep for this (service_date, trip, stop_sequence); 2+ are set aside.
+    -- The ORDER BY lists many columns so that two duplicates are never "tied":
+    -- a tie would let the database pick either row, and rebuilds would differ.
     ROW_NUMBER() OVER (
         PARTITION BY service_date, trip_id, stop_sequence
         ORDER BY stop_ts_utc NULLS LAST, vehicle_id NULLS LAST, stop_id NULLS LAST,
-                 scheduled_arrival_ts_utc NULLS LAST, travel_time_seconds NULLS LAST,
-                 dwell_time_seconds NULLS LAST, headway_trunk_seconds NULLS LAST
+                 route_id, branch_route_id NULLS LAST, trunk_route_id NULLS LAST,
+                 direction_id NULLS LAST, scheduled_arrival_ts_utc NULLS LAST,
+                 scheduled_departure_ts_utc NULLS LAST, travel_time_seconds NULLS LAST,
+                 dwell_time_seconds NULLS LAST, headway_trunk_seconds NULLS LAST,
+                 headway_branch_seconds NULLS LAST, source_file
     )                                                      AS key_row_number
 FROM typed

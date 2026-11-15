@@ -21,10 +21,12 @@ export default function Palette({ model, onClose }) {
 
   const all = useMemo(() => {
     const pages = [
-      { key: 'p-overview', group: 'Pages', label: 'Overview', hint: 'The year at a glance', go: () => navigate([]) },
+      { key: 'p-story', group: 'Pages', label: 'Story', hint: 'What happened this year, and why', go: () => navigate([]) },
+      { key: 'p-explore', group: 'Pages', label: 'Explore', hint: 'Every day on every line', go: () => navigate(['explore']) },
       { key: 'p-episodes', group: 'Pages', label: 'Episodes', hint: 'Closures, disruptions, and gaps', go: () => navigate(['episodes']) },
       { key: 'p-weather', group: 'Pages', label: 'Weather', hint: 'How rain and snow change service', go: () => navigate(['weather']) },
-      { key: 'p-method', group: 'Pages', label: 'Method', hint: 'How to read this, and what to doubt', go: () => navigate(['method']) },
+      { key: 'p-report', group: 'Pages', label: 'Report', hint: 'The analysis, with the evidence', go: () => navigate(['report']) },
+      { key: 'p-method', group: 'Pages', label: 'Method', hint: 'How the pipeline was built and checked', go: () => navigate(['method']) },
     ];
     if (!model) return pages;
     const lines = LINES.filter((l) => model.byLine.has(l.id)).map((l) => ({

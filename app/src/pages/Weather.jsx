@@ -3,6 +3,7 @@ import { LINES, WEATHER_CATEGORIES } from '../lib/constants.js';
 import { formatMetric, n0 } from '../lib/format.js';
 import { useTheme } from '../lib/hooks.js';
 import { useQueryState } from '../lib/router.js';
+import { Figure } from '../components/Figure.jsx';
 import { Segmented } from '../components/Segmented.jsx';
 import WeatherHeat from '../components/WeatherHeat.jsx';
 import { gradientCss } from '../lib/ramps.js';
@@ -48,7 +49,7 @@ export default function Weather({ model }) {
   return (
     <div className="page weather">
       <header className="page-head">
-        <h1>How weather changes service</h1>
+        <h1 className="display-m">How weather changes service</h1>
         <p className="lede">
           Each cell compares one kind of weather at one hour of the day. Rain and snow are rarer than dry weather, so cells with few observations are left blank rather than guessed.
         </p>
@@ -70,6 +71,16 @@ export default function Weather({ model }) {
         </label>
       </div>
 
+      <Figure
+        title={`${metric.label} by weather and hour of day, ${weekend ? 'weekends' : 'weekdays'}${line ? `, ${LINES.find((x) => x.id === line)?.label}` : ''}`}
+        lede="Does the same hour of the day look different when it rains or snows?"
+        guide="Each row is a kind of weather and each column an hour of the day. The color of a cell is the measure for that hour in that weather, and dashed empty cells mean too few observations to trust. Compare down a column to see what weather does at the same hour."
+        takeaway={(() => {
+          const d = byCat.get('dry'); const sn = byCat.get('snow');
+          return d && sn && d.value != null && sn.value != null ? `Across the day, snow hours average ${formatMetric(metric, sn.value)} against ${formatMetric(metric, d.value)} for dry hours.` : 'Move the minimum-observations slider to include or hide thinly covered cells.';
+        })()}
+        wide
+      >
       <WeatherHeat cells={cells} metric={metric} minN={minN} theme={theme} />
       <div className="legend ramp-legend">
         <span className="ramp-end">{formatMetric(metric, metric.higherIsWorse ? metric.domain[0] : metric.domain[1])}</span>
@@ -77,6 +88,7 @@ export default function Weather({ model }) {
         <span className="ramp-end">{formatMetric(metric, metric.higherIsWorse ? metric.domain[1] : metric.domain[0])}</span>
         <span className="muted ramp-help">{metric.help}</span>
       </div>
+      </Figure>
 
       <section className="block">
         <h2>Across the whole day</h2>

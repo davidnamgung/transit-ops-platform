@@ -17,6 +17,7 @@ const nf2 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2, minimumFr
 
 export const n0 = (v) => (v == null || Number.isNaN(v) ? 'no data' : nf0.format(v));
 export const n1 = (v) => (v == null || Number.isNaN(v) ? 'no data' : nf1.format(v));
+export const pct1 = (v) => (v == null || Number.isNaN(v) ? 'no data' : `${nf1.format(v)}%`);
 export const pct0 = (v) => (v == null || Number.isNaN(v) ? 'no data' : `${nf0.format(v)}%`);
 export const times = (v) => (v == null || Number.isNaN(v) ? 'no data' : `${nf2.format(v)}x`);
 export const minutes = (v) => {

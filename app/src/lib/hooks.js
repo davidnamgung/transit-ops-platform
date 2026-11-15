@@ -4,7 +4,7 @@ export const ThemeContext = createContext({ theme: 'night', toggle: () => {} });
 export const useTheme = () => useContext(ThemeContext);
 
 export function useThemeState() {
-  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'night');
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'day');
   const toggle = useCallback(() => {
     setTheme((current) => {
       const next = current === 'night' ? 'day' : 'night';

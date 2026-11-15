@@ -17,7 +17,7 @@ export default function DayPanel({ model, idx, lines, onSelect, shortcuts }) {
             <ul className="shortcuts">
               {shortcuts.map((s) => (
                 <li key={s.key}>
-                  <button type="button" className="shortcut" onClick={() => onSelect(s.idx, s.range)}>
+                  <button type="button" className="shortcut" onClick={() => onSelect(s.idx, s)}>
                     <span className="shortcut-title">{s.title}</span>
                     <span className="shortcut-note">{s.note}</span>
                   </button>

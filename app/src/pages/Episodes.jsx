@@ -5,6 +5,7 @@ import { dateRange, n0, pct0, plural, times } from '../lib/format.js';
 import { navigate, useQueryState } from '../lib/router.js';
 import { Bullet, DayTypeTag } from '../components/Bullet.jsx';
 import EpisodeTimeline from '../components/EpisodeTimeline.jsx';
+import { Figure } from '../components/Figure.jsx';
 
 const TYPES = DAY_TYPE_ORDER.filter((t) => t !== 'normal');
 
@@ -98,7 +99,7 @@ export default function Episodes({ model }) {
   return (
     <div className="page episodes">
       <header className="page-head">
-        <h1>Closures, disruptions, and gaps</h1>
+        <h1 className="display-m">Closures, disruptions, and gaps</h1>
         <p className="lede">
           An episode is a run of consecutive days when a line was not normal. {n0(model.episodes.length)} of them in the year. Pick one to see what the data says and how it was labeled.
         </p>
@@ -122,7 +123,15 @@ export default function Episodes({ model }) {
         </label>
       </div>
 
-      <EpisodeTimeline model={model} episodes={list} lanes={lanes} selectedKey={selected?.key} onSelect={(key) => setParams({ ep: key })} />
+      <Figure
+        title="Every episode, on its line, across the year"
+        lede="When did each line leave normal service, and for how long?"
+        guide="Each row is a line and each bar is one episode, placed where it happened in the year and as long as it lasted. Violet bars are planned closures, pink are disruptions, teal are schedule gaps. Click a bar to read it, or pick a row in the table below."
+        takeaway={`${n0(list.length)} episodes match the filters. Long violet bars are planned work; short pink bars are disruptions, usually a day or two.`}
+        wide
+      >
+        <EpisodeTimeline model={model} episodes={list} lanes={lanes} selectedKey={selected?.key} onSelect={(key) => setParams({ ep: key })} />
+      </Figure>
 
       <div className="split ep-split">
         <section className="panel" aria-label="Episode list">

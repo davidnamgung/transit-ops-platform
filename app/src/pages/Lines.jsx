@@ -3,6 +3,11 @@ import { LINES, LINE_BY_ID, LINE_GROUPS, METRIC_BY_ID } from '../lib/constants.j
 import { dateRange, median, minutes, n0, n1, pct0, plural } from '../lib/format.js';
 import { href, navigate, useQueryState } from '../lib/router.js';
 import { Bullet } from '../components/Bullet.jsx';
+import CalendarHeat from '../components/CalendarHeat.jsx';
+import { dayTip } from '../components/DayTip.jsx';
+import { Figure } from '../components/Figure.jsx';
+import { Legend } from '../components/Legend.jsx';
+import { useTheme } from '../lib/hooks.js';
 import EpisodeList from '../components/EpisodeList.jsx';
 import HourlyProfile from '../components/HourlyProfile.jsx';
 import { Segmented } from '../components/Segmented.jsx';
@@ -20,6 +25,7 @@ const HOURLY_METRICS = [
 ];
 
 export default function Lines({ model }) {
+  const { theme } = useTheme();
   const [params, setParams, segs] = useQueryState();
   const routeId = model.byLine.has(segs[1]) ? segs[1] : model.routes[0];
   const l = LINE_BY_ID[routeId];
@@ -81,6 +87,19 @@ export default function Lines({ model }) {
           </div>
         )}
       </dl>
+
+      <section className="block">
+        <Figure
+          title={`The ${l.name}’s year, one square per day`}
+          lede="Which days were normal, and which were exceptions?"
+          legend={<Legend metricId="type" theme={theme} />}
+          guide="Weeks run left to right with Monday at the top. Gray-tinted squares are normal days; violet, pink, and teal mark closures, disruptions, and schedule gaps. Click a square to open that day in the explorer."
+          takeaway={`${n0(facts.normal)} of ${n0(facts.total)} days were normal. The longest exception was ${episodes[0] ? `${dateRange(episodes[0].start_date, episodes[0].end_date)}: ${episodes[0].label}` : 'none, there were no exceptions'}.`}
+          wide
+        >
+          <CalendarHeat model={model} routeId={routeId} theme={theme} size="lg" tooltipFor={(r, i) => dayTip(model, r, i)} onSelect={openDay} />
+        </Figure>
+      </section>
 
       <section className="block">
         <div className="block-head">

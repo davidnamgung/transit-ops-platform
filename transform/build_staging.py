@@ -1,8 +1,9 @@
 """
-Build the staging layer: run each SQL file in models/staging/ against the
-raw data and save the result as a table in a local DuckDB file.
+Build the warehouse: run every SQL file in models/<layer>/ against the raw
+data, layer by layer (staging -> intermediate -> marts). Each file becomes a
+table named after the file, in a schema named after the layer.
 
-Safe to re-run: every table is rebuilt from the raw files (CREATE OR REPLACE).
+Safe to re-run: every table is rebuilt (CREATE OR REPLACE).
 
 Usage:  uv run python transform/build_staging.py
 """
@@ -12,29 +13,31 @@ from pathlib import Path
 
 import duckdb
 
-# The SQL files use paths relative to the project root, so always start there.
 ROOT = Path(__file__).resolve().parent.parent
-os.chdir(ROOT)
+os.chdir(ROOT)  # the SQL files use paths relative to the project root
 
 DB_PATH = Path("data/warehouse/transit.duckdb")
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-models = sorted(Path("models/staging").glob("*.sql"))
-if not models:
-    raise SystemExit("No SQL files found in models/staging/.")
+LAYERS = ["staging", "intermediate", "marts"]  # order matters: later layers read earlier ones
 
 con = duckdb.connect(str(DB_PATH))
 con.execute("SET TimeZone = 'UTC'")  # the pipeline always works in UTC
-con.execute("CREATE SCHEMA IF NOT EXISTS staging")
 
-for sql_file in models:
-    name = sql_file.stem  # filename without .sql, e.g. stg_weather_hourly
-    sql = sql_file.read_text().strip().rstrip(";")
-    start = time.time()
-    print(f"Building staging.{name} ...", end=" ", flush=True)
-    con.execute(f"CREATE OR REPLACE TABLE staging.{name} AS\n{sql}")
-    n_rows = con.execute(f"SELECT COUNT(*) FROM staging.{name}").fetchall()[0][0]
-    print(f"{n_rows:,} rows in {time.time() - start:.1f}s")
+for layer in LAYERS:
+    files = sorted((Path("models") / layer).glob("*.sql"))
+    if not files:
+        continue
+    con.execute(f"CREATE SCHEMA IF NOT EXISTS {layer}")
+    print(f"\n== {layer} ==")
+    for sql_file in files:
+        name = sql_file.stem
+        sql = sql_file.read_text().strip().rstrip(";")
+        start = time.time()
+        print(f"Building {layer}.{name} ...", end=" ", flush=True)
+        con.execute(f"CREATE OR REPLACE TABLE {layer}.{name} AS\n{sql}")
+        n_rows = con.execute(f"SELECT COUNT(*) FROM {layer}.{name}").fetchall()[0][0]
+        print(f"{n_rows:,} rows in {time.time() - start:.1f}s")
 
 con.close()
 print(f"\nDone. Warehouse file: {DB_PATH} ({DB_PATH.stat().st_size / 1e6:,.0f} MB)")

@@ -36,8 +36,12 @@ MassDOT Developers License Agreement.
 - Thresholds are conventional round numbers, not tuned to the data.
 
 ## Data gaps and exclusions
-- 17 of the 365 requested service dates are not in the data (see the gap check
-  against LAMP's index.csv). Charts show these as "no data", never as zeros.
+- 17 of the 365 requested service dates have no data: 16 were published by LAMP as
+  empty files (zero rows) and 1 (2026-01-06) was not published. Charts show these as
+  "no data", never as zeros. Empty files are re-requested on every run.
+- Alerts: LAMP's alert file has one row per alert version and affected entity, so we
+  keep each alert's newest version. Alerts with no end time and no closing time are
+  flagged "open-ended" and never treated as active for an assumed duration.
 - Trip kinds: scheduled (digits-only IDs, ~81% of events), ADDED (~18%), and
   NONREV (~0.4%). NONREV trips are excluded from schedule comparison and headways.
 - Duplicate keys: ~0.15% of rows share a (service date, trip, stop sequence).

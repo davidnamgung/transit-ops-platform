@@ -6,6 +6,8 @@ table named after the file, in a schema named after the layer.
 Safe to re-run: every table is rebuilt (CREATE OR REPLACE).
 
 Usage:  uv run python transform/build_staging.py
+Testing with fewer CPU threads (to check results do not depend on the machine):
+        DUCKDB_THREADS=1 uv run python transform/build_staging.py
 """
 import os
 import time
@@ -21,6 +23,14 @@ DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 LAYERS = ["staging", "intermediate", "marts"]  # order matters: later layers read earlier ones
 
+# Fail early, before touching the warehouse, if any layer has no SQL files.
+for layer in LAYERS:
+    if not list((Path("models") / layer).glob("*.sql")):
+        raise SystemExit(
+            f"No .sql files found in models/{layer}/. "
+            "Check the folder and file names (run: find models -type f)."
+        )
+
 try:
     con = duckdb.connect(str(DB_PATH))
 except duckdb.IOException as err:
@@ -30,15 +40,17 @@ except duckdb.IOException as err:
         "To see what is holding it:  lsof data/warehouse/transit.duckdb\n"
         f"Original error: {str(err)[:200]}"
     )
+
 con.execute("SET TimeZone = 'UTC'")  # the pipeline always works in UTC
+threads = os.environ.get("DUCKDB_THREADS")
+if threads:
+    con.execute(f"SET threads = {int(threads)}")
+    print(f"Using {int(threads)} thread(s)")
 
 for layer in LAYERS:
-    files = sorted((Path("models") / layer).glob("*.sql"))
-    if not files:
-        continue
     con.execute(f"CREATE SCHEMA IF NOT EXISTS {layer}")
     print(f"\n== {layer} ==")
-    for sql_file in files:
+    for sql_file in sorted((Path("models") / layer).glob("*.sql")):
         name = sql_file.stem
         sql = sql_file.read_text().strip().rstrip(";")
         start = time.time()

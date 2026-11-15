@@ -7,3 +7,5 @@ node_modules/
 # the web app ships its own small data files
 !app/public/data/exports/pipeline_run.json
 exports/
+.pytest_cache/
+.ruff_cache/

@@ -49,7 +49,7 @@ print(f"staging rows: {total:,}; set aside as duplicate keys: {dup:,} ({100 * du
 print("\nschedule comparability by trip kind (duplicates excluded):")
 print("   (kind, events, pct_with_schedule, pct_beyond_3h_of_those)")
 for r in rows(f"""
-    SELECT CASE WHEN is_added_trip THEN 'ADDED' ELSE 'scheduled' END AS kind,
+    SELECT trip_kind AS kind,
            COUNT(*) AS events,
            ROUND(100.0 * COUNT(schedule_diff_sec) / COUNT(*), 1) AS pct_with_schedule,
            ROUND(100.0 * COUNT(*) FILTER (WHERE schedule_diff_sec IS NOT NULL

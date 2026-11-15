@@ -6,6 +6,7 @@ SELECT
     e.direction_id,
     e.parent_station,
     e.is_added_trip,
+    e.trip_kind,
     e.stop_ts_utc,
     e.stop_ts_local,
 
@@ -18,9 +19,9 @@ SELECT
 
     -- schedule comparison (see docs/metrics.md for the 3-hour rule)
     e.schedule_diff_sec,
-    (NOT e.is_added_trip
+    (e.trip_kind = 'scheduled'
         AND e.schedule_diff_sec IS NOT NULL
-        AND ABS(e.schedule_diff_sec) <= 10800)   AS is_schedule_comparable,
+        AND ABS(e.schedule_diff_sec) <= 43200)   AS is_schedule_comparable,
 
     -- measured vs scheduled durations
     e.travel_time_seconds,

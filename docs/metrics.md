@@ -10,16 +10,16 @@ MassDOT Developers License Agreement.
   after a Saturday belongs to Saturday service. Weekday/weekend uses service date.
 
 ## Schedule difference
-- Actual stop time minus scheduled arrival time, in minutes. Positive = later than
-  scheduled.
-- Computed only for **comparable** events: not an ADDED trip, a schedule exists, and
-  the absolute difference is 3 hours or less.
-- Why the 3-hour rule: larger differences are more likely a mismatch between an
-  event and its scheduled stop than a real delay. Cost: genuine multi-hour
-  disruptions are excluded, which biases delay metrics downward. The excluded count
-  is reported in checks. The threshold is a judgment call and can be revisited.
-- Note: whether the LAMP stop timestamp is an arrival or departure time is not yet
-  verified, so this is called a "schedule difference", not a "delay".
+- Actual stop time minus scheduled arrival time, in minutes. Positive = later than scheduled.
+- Computed only for **scheduled** trips (trip IDs that are neither ADDED nor NONREV)
+  that have a schedule value, and only when the absolute difference is 12 hours or less.
+- Trip kinds: ADDED = trips not matched to the published schedule (may be temporary
+  service patterns or recording gaps); NONREV = non-revenue movements (inferred from
+  the prefix; not confirmed in LAMP documentation). Neither carries a usable schedule.
+- The 12-hour cap is a sanity limit against mismatched events, not a delay definition.
+  Events more than 3 hours late are counted separately as "very late".
+- Whether the LAMP stop timestamp is an arrival or a departure is not yet verified,
+  so this is called a "schedule difference", not a "delay".
 
 ## Within 5 minutes
 - Share of comparable events whose absolute schedule difference is 300 seconds or less.

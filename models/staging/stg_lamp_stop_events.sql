@@ -20,6 +20,9 @@ typed AS (
         trunk_route_id,
         trip_id,
         trip_id LIKE 'ADDED%'                         AS is_added_trip,
+        CASE WHEN trip_id LIKE 'ADDED%'  THEN 'added'
+        WHEN trip_id LIKE 'NONREV%' THEN 'nonrevenue'
+        ELSE 'scheduled' END                     AS trip_kind,
         vehicle_id,
         vehicle_label,
         len(string_split(vehicle_consist, '|'))       AS n_cars,

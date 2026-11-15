@@ -20,9 +20,10 @@ reliability AS (
         COUNT(*)                                                    AS n_events,
         COUNT(*) FILTER (WHERE is_added_trip)                       AS n_added_events,
         COUNT(*) FILTER (WHERE is_schedule_comparable)              AS n_comparable,
-        COUNT(*) FILTER (WHERE NOT is_added_trip
+        COUNT(*) FILTER (WHERE trip_kind = 'nonrevenue')            AS n_nonrevenue_events,
+        COUNT(*) FILTER (WHERE trip_kind = 'scheduled'
                            AND schedule_diff_sec > 10800)           AS n_very_late_events,
-        COUNT(*) FILTER (WHERE NOT is_added_trip
+        COUNT(*) FILTER (WHERE trip_kind = 'scheduled'
                            AND schedule_diff_sec < -10800)          AS n_very_early_events,
         ROUND(100.0 * COUNT(*) FILTER (WHERE is_schedule_comparable)
               / COUNT(*), 1)                                        AS pct_events_comparable,

@@ -1,0 +1,14 @@
+staging rows                       14538608
+rows kept after dedupe             14516874
+comparable events                  11754166
+sum of schedule diff (sec)         1627437191.0
+events with a headway              12667360
+line-days, no comparable events    267
+daily mart (hash checksum)         16831516908492385213
+daily mart (md5 checksum)          ce7a61ebef61301c09263a9c5c06dee6
+alerts                             22381
+alert kinds (md5)                  ffde3ff78fa1c542a04954fffa79215e
+line-day alerts (md5)              b9552d9f94319dd680db17ccd095e449
+day types (md5)                    28f4c8a10ca7f170cb32206fc900cc83
+episodes                           102
+duplicate groups spanning 2+ routes 16865

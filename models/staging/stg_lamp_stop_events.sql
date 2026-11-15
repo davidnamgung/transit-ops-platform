@@ -63,23 +63,34 @@ typed AS (
         -- lineage
         regexp_extract(filename, '[^/]+$')            AS source_file
     FROM raw
+),
+with_route_counts AS (
+    SELECT
+        *,
+        -- How many of this trip's rows sit on this row's route. On the Green Line's
+        -- shared trunk, LAMP records the same train under several branch routes.
+        -- A trip belongs to one branch, so the route with the most rows is its real one.
+        COUNT(*) OVER (PARTITION BY service_date, trip_id, route_id) AS route_rows_in_trip
+    FROM typed
 )
 SELECT
     *,
-    -- Raw difference between actual and scheduled time, in seconds.
-    -- Positive = later than scheduled. A neutral name: we have not yet
-    -- verified whether stop_ts is an arrival or a departure time.
+    -- Raw difference between actual and scheduled arrival time, in seconds.
+    -- Positive = later than scheduled. (stop_timestamp is the ARRIVAL time at the
+    -- stop: verified in checks/08_caveats.py.)
     epoch(stop_ts_utc) - epoch(scheduled_arrival_ts_utc)   AS schedule_diff_sec,
     -- 1 = the row we keep for this (service_date, trip, stop_sequence); 2+ are set aside.
-    -- The ORDER BY lists many columns so that two duplicates are never "tied":
-    -- a tie would let the database pick either row, and rebuilds would differ.
+    -- First preference: the row on the trip's main route. The rest of the ORDER BY lists
+    -- many columns so that two duplicates are never "tied": a tie would let the database
+    -- pick either row, and rebuilds would differ.
     ROW_NUMBER() OVER (
         PARTITION BY service_date, trip_id, stop_sequence
-        ORDER BY stop_ts_utc NULLS LAST, vehicle_id NULLS LAST, stop_id NULLS LAST,
+        ORDER BY route_rows_in_trip DESC,
+                 stop_ts_utc NULLS LAST, vehicle_id NULLS LAST, stop_id NULLS LAST,
                  route_id, branch_route_id NULLS LAST, trunk_route_id NULLS LAST,
                  direction_id NULLS LAST, scheduled_arrival_ts_utc NULLS LAST,
                  scheduled_departure_ts_utc NULLS LAST, travel_time_seconds NULLS LAST,
                  dwell_time_seconds NULLS LAST, headway_trunk_seconds NULLS LAST,
                  headway_branch_seconds NULLS LAST, source_file
     )                                                      AS key_row_number
-FROM typed
+FROM with_route_counts

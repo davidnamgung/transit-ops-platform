@@ -35,6 +35,20 @@ MassDOT Developers License Agreement.
 - dry: everything else; unknown: no weather data
 - Thresholds are conventional round numbers, not tuned to the data.
 
+## Data gaps and exclusions
+- 17 of the 365 requested service dates are not in the data (see the gap check
+  against LAMP's index.csv). Charts show these as "no data", never as zeros.
+- Trip kinds: scheduled (digits-only IDs, ~81% of events), ADDED (~18%), and
+  NONREV (~0.4%). NONREV trips are excluded from schedule comparison and headways.
+- Duplicate keys: ~0.15% of rows share a (service date, trip, stop sequence).
+  We keep the earliest and set the rest aside. Only about a fifth are exact copies;
+  the rest are the same vehicle at another time or platform, or two vehicles.
+- Known small oddities (not yet investigated): about 400 Green-E events run more
+  than 3 hours early across 42 days; Orange and Red have a few hundred
+  early/late events beyond 3 hours.
+- ADDED episodes can cover whole branches for days (for example all Green
+  branches on Oct 31 - Nov 1, 2026), so an ADDED share is context, not an error rate.
+
 ## Known limitations
 - One weather point for the whole network (central Boston).
 - Open-Meteo historical data is model reanalysis, not station measurements.

@@ -29,13 +29,18 @@ SELECT
     e.dwell_time_seconds,
     e.headway_trunk_seconds,
     e.scheduled_headway_trunk_seconds,
-    e.headway_trunk_seconds / NULLIF(e.scheduled_headway_trunk_seconds, 0)  AS headway_ratio,
+    CASE WHEN e.trip_kind = 'nonrevenue' THEN NULL   -- passengers cannot board these
+    ELSE e.headway_trunk_seconds / NULLIF(e.scheduled_headway_trunk_seconds, 0)
+    END                                      AS headway_ratio,
 
     -- weather for the hour the event happened
     w.temperature_c,
     w.precipitation_mm,
     w.snowfall_cm,
     w.wind_gust_kmh,
+    w.snow_24h_cm,
+    w.snow_72h_cm,
+    w.precip_24h_mm,
     CASE
         WHEN w.precipitation_mm IS NULL THEN 'unknown'
         WHEN w.snowfall_cm >= 0.1       THEN 'snow'
@@ -44,6 +49,6 @@ SELECT
         ELSE 'dry'
     END                                      AS weather_category
 FROM staging.stg_lamp_stop_events e
-LEFT JOIN staging.stg_weather_hourly w
+LEFT JOIN intermediate.int_hourly_weather_features w
        ON date_trunc('hour', e.stop_ts_utc) = w.hour_utc
 WHERE e.key_row_number = 1

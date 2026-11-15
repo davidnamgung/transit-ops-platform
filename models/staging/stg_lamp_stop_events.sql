@@ -72,6 +72,8 @@ SELECT
     -- 1 = first row for this (service_date, trip, stop_sequence); 2+ are set aside.
     ROW_NUMBER() OVER (
         PARTITION BY service_date, trip_id, stop_sequence
-        ORDER BY stop_ts_utc NULLS LAST, vehicle_id
+        ORDER BY stop_ts_utc NULLS LAST, vehicle_id NULLS LAST, stop_id NULLS LAST,
+                 scheduled_arrival_ts_utc NULLS LAST, travel_time_seconds NULLS LAST,
+                 dwell_time_seconds NULLS LAST, headway_trunk_seconds NULLS LAST
     )                                                      AS key_row_number
 FROM typed

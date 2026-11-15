@@ -4,3 +4,5 @@ data/
 __pycache__/
 .DS_Store
 node_modules/
+# the web app ships its own small data files
+!app/public/data/

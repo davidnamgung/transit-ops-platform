@@ -33,4 +33,4 @@ SELECT *,
         WHEN pct_added >= 90                                           THEN 'schedule_matching_gap'
         ELSE 'normal'
     END AS day_type
-FROM joinedgit add .
+FROM joined

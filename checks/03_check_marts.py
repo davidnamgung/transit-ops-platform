@@ -63,7 +63,7 @@ labels = ["p01", "p05", "p25", "p50", "p75", "p95", "p99"]
 vals = rows(f"""SELECT quantile_cont(schedule_diff_sec / 60.0,
                                     [0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99])
                 FROM {INT} WHERE is_schedule_comparable""")[0][0]
-print("  ", {l: round(v, 2) for l, v in zip(labels, vals)})
+print("  ", {name: round(v, 2) for name, v in zip(labels, vals)})
 
 print("\nevents by weather category (category, events, pct):")
 for r in rows(f"""SELECT weather_category, COUNT(*),

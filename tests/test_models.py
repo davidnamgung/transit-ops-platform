@@ -61,7 +61,7 @@ def test_green_trunk_duplicates_keep_the_trips_own_route(q):
 
 
 def test_same_route_duplicate_keeps_the_earliest_record(q):
-    rows = q("""SELECT stop_ts_utc, key_row_number FROM staging.stg_lamp_stop_events
+    rows = q("""SELECT epoch(stop_ts_utc), key_row_number FROM staging.stg_lamp_stop_events
                 WHERE trip_id = '101070' AND stop_sequence = 5 ORDER BY key_row_number""")
     assert [r[1] for r in rows] == [1, 2]
     assert rows[0][0] < rows[1][0]
@@ -98,10 +98,10 @@ def test_comparable_events_total(q):
 # ---------- staging: weather and stations ----------
 
 def test_weather_has_one_row_per_hour(q):
-    n, first, last = q("SELECT COUNT(*), MIN(hour_utc), MAX(hour_utc) FROM staging.stg_weather_hourly")[0]
+    n, first, last = q("SELECT COUNT(*), epoch(MIN(hour_utc)), epoch(MAX(hour_utc)) FROM staging.stg_weather_hourly")[0]
     assert n == 14 * 24
-    assert (last - first).total_seconds() == (n - 1) * 3600  # no gaps, no duplicates
-    assert first == datetime(2026, 1, 5, tzinfo=timezone.utc)
+    assert last - first == (n - 1) * 3600  # no gaps, no duplicates
+    assert first == datetime(2026, 1, 5, tzinfo=timezone.utc).timestamp()
 
 
 def test_recent_snow_totals_stay_empty_until_a_full_window_exists(q):
@@ -128,13 +128,14 @@ def test_stations_list_the_lines_that_serve_them(q):
 # ---------- alerts ----------
 
 def test_alerts_are_rebuilt_from_all_their_versions(q):
-    rows = {r[0]: r for r in q("""SELECT alert_id, severity, n_versions, is_open_ended, start_ts_utc, effective_end_utc
+    rows = {r[0]: r for r in q("""SELECT alert_id, severity, n_versions, is_open_ended,
+                                         epoch(start_ts_utc), epoch(effective_end_utc)
                                   FROM staging.stg_alerts""")}
     assert set(rows) == {1001, 1002, 1003, 1004, 1005}  # the bus alert (1006) is ignored
     _, severity, versions, open_ended, start, end = rows[1001]
     assert (severity, versions, open_ended) == (7, 3, False)  # peak severity survives the closing record's 0
-    assert start == datetime(2026, 1, 12, 8, 0, tzinfo=timezone.utc)  # 03:00 Boston time
-    assert end == datetime(2026, 1, 14, 2, 55, tzinfo=timezone.utc)  # the closing time beat the extended end
+    assert start == datetime(2026, 1, 12, 8, 0, tzinfo=timezone.utc).timestamp()  # 03:00 Boston time
+    assert end == datetime(2026, 1, 14, 2, 55, tzinfo=timezone.utc).timestamp()  # the closing time beat the extended end
 
 
 def test_only_the_alert_with_no_end_and_no_closing_is_open_ended(q):

@@ -21,7 +21,15 @@ DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 LAYERS = ["staging", "intermediate", "marts"]  # order matters: later layers read earlier ones
 
-con = duckdb.connect(str(DB_PATH))
+try:
+    con = duckdb.connect(str(DB_PATH))
+except duckdb.IOException as err:
+    raise SystemExit(
+        "Cannot open the warehouse: another program has it open.\n"
+        "Close any notebook that uses it (restart its kernel, then close it).\n"
+        "To see what is holding it:  lsof data/warehouse/transit.duckdb\n"
+        f"Original error: {str(err)[:200]}"
+    )
 con.execute("SET TimeZone = 'UTC'")  # the pipeline always works in UTC
 
 for layer in LAYERS:

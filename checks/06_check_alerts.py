@@ -58,6 +58,9 @@ check("fewer than 5% of alerts are open-ended",
       f"SELECT CASE WHEN AVG(CAST(is_open_ended AS INTEGER)) > 0.05 THEN 1 ELSE 0 END FROM {A}",
       level="WARN")
 
+check("known alert 685308 keeps its peak severity (7 or higher)",
+      f"SELECT COUNT(*) FROM {A} WHERE alert_id = 685308 AND (severity IS NULL OR severity < 7)")
+
 print(f"\nSummary: {results.count('PASS')} passed, "
       f"{results.count('WARN')} warnings, {results.count('FAIL')} failures")
 sys.exit(1 if "FAIL" in results else 0)

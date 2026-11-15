@@ -8,8 +8,13 @@ re-requested every run in case real data appears later.
 Usage (run from the project folder):
     uv run python ingestion/03_download_lamp_range.py --days 10   # small test
     uv run python ingestion/03_download_lamp_range.py             # default: 365 days
+    uv run python ingestion/03_download_lamp_range.py --prune     # also delete files older than the window
+
+Exit code: 0 when every day is either downloaded, already present, or genuinely not
+published; 1 when any download failed, so an automated run can stop and alert.
 """
 import argparse
+import sys
 import time
 from datetime import date, timedelta
 
@@ -24,6 +29,11 @@ parser.add_argument(
     type=int,
     default=7,
     help="newest day = today minus this many days (recent days may not be published yet)",
+)
+parser.add_argument(
+    "--prune",
+    action="store_true",
+    help="delete downloaded files that fall before the window (the automated run uses this)",
 )
 args = parser.parse_args()
 
@@ -51,15 +61,26 @@ for i, d in enumerate(wanted, start=1):
     if i % 25 == 0 or i == len(wanted):
         print(f"  {i}/{len(wanted)} processed ...")
 
+pruned = 0
+if args.prune:
+    keep = {f"{d.isoformat()}.parquet" for d in wanted}
+    for f in OUT_DIR.glob("20*.parquet"):
+        if f.name not in keep:
+            f.unlink()
+            pruned += 1
+
 print(f"\nComplete files already had: {skipped}   Newly downloaded: {downloaded}   "
       f"Not published: {len(missing)}   Failed: {len(failed)}   Empty placeholders: {len(empty)}")
+if pruned:
+    print(f"Removed {pruned} files older than the window.")
 if missing:
     print("Not published:", missing[:20])
     (OUT_DIR / "_missing_dates.txt").write_text("\n".join(missing))
 if empty:
     print("Published but EMPTY (zero rows):", empty)
 if failed:
-    print("FAILED (re-run the script to retry):", failed)
+    print("FAILED:", failed)
 if len(missing) > 20:
     print(f"WARNING: {len(missing)} files not published in one run. That is unusual; "
           "check whether the server is blocking us before trusting the gaps.")
+sys.exit(1 if failed else 0)

@@ -71,3 +71,15 @@ MassDOT Developers License Agreement.
 - Limitations: thresholds are not tuned per line (Green-D's normal long-gap share is
   higher than Orange's); ADDED surges of 70-89% (for example Red, Jul 1-13, 2026) fall
   below the 90% gap threshold; alerts explain closures much better than disruptions.
+
+## Verified column meanings and the duplicate rule
+- stop_timestamp is the ARRIVAL time at a stop and move_timestamp is the departure
+  from the previous stop. Evidence (checks/08_caveats.py): dwell time equals the next
+  stop's departure minus this stop's arrival for 99.9% of stops; travel time equals
+  arrival minus previous departure for 100%. So "schedule difference" is an arrival
+  delay versus the published schedule (scheduled trips only; unreliable on disruption days).
+- Typical scheduled-trip arrival: median +54 seconds, median absolute difference 176 seconds.
+  Median dwell time: 48 seconds.
+- Duplicate keys: all conflicts between routes are Green Line trunk records (the same train
+  recorded under several branches). We keep the row on the trip's main route (the route
+  holding most of the trip's rows); other duplicates keep the earliest row.

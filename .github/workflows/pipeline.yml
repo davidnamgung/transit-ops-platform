@@ -1,5 +1,6 @@
 # Pipeline: every day, download the newest MBTA, alert, and weather data, rebuild the warehouse,
-# run every data-quality check, and export the website's data files.
+# run every data-quality check, and export the website's data files. If anything fails, send an
+# alert to Discord.
 #
 # It runs on a schedule and also whenever you press "Run workflow" on the Actions page.
 # The actions below are pinned to an exact commit, with the version beside it, as in ci.yml.
@@ -16,6 +17,10 @@ on:
         description: "Ignore the saved downloads and download everything again"
         type: boolean
         default: false
+      test_alert:
+        description: "Only send a test alert to Discord; do not run the pipeline"
+        type: boolean
+        default: false
 
 # This workflow may only read the repository. It cannot change it or publish anything.
 permissions:
@@ -29,6 +34,7 @@ concurrency:
 jobs:
   run:
     name: Download, build, check, export
+    if: ${{ !inputs.test_alert }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -79,3 +85,27 @@ jobs:
           path: exports/
           retention-days: 30
           if-no-files-found: warn
+
+      # If any step above failed, say so on Discord. This uses only the Python already on the
+      # computer, so it still works when the failure happened before the packages were installed.
+      - name: Send an alert to Discord
+        if: ${{ failure() }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python3 pipeline/notify.py
+
+  test-alert:
+    name: Send a test alert
+    if: ${{ inputs.test_alert }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Get the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Send a test message to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python3 pipeline/notify.py --test

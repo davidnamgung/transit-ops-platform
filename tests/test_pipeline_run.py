@@ -60,8 +60,11 @@ def make_stub_project(path, newest_age_days=8):
 
 
 def run(root, *args, **env):
+    # a clean environment: when these tests run on GitHub they must not pick up GitHub's own variables
+    # (they would write into the real run summary and take their run id from the real run)
+    base = {k: v for k, v in os.environ.items() if not k.startswith("GITHUB_")}
     result = subprocess.run([sys.executable, "pipeline/run.py", *args], cwd=root, capture_output=True, text=True,
-                            env={**os.environ, **env})
+                            env={**base, **env})
     record = json.loads((root / "exports/pipeline_run.json").read_text()) if (root / "exports/pipeline_run.json").exists() else None
     return result, record
 

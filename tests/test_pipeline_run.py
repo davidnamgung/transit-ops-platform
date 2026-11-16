@@ -138,3 +138,23 @@ def test_a_hung_stage_is_stopped(tmp_path, monkeypatch):
     code, lines = module.run_command([sys.executable, "-c", "import time; print('start'); time.sleep(30)"], timeout=1)
     assert code != 0
     assert any("STOPPED" in line for line in lines)
+
+
+def test_on_github_the_run_is_summarized_on_the_run_page(tmp_path):
+    summary = tmp_path / "summary.md"
+    result, _ = run(make_stub_project(tmp_path / "p"), "--skip-download", GITHUB_STEP_SUMMARY=str(summary))
+    text = summary.read_text()
+    assert result.returncode == 0
+    assert "## Pipeline success" in text
+    assert "| build/warehouse | ok |" in text
+    assert "**marts checks:** 9 passed, 0 warnings, 0 failures" in text
+    assert "100 stop events" in text
+
+
+def test_a_failed_run_summary_names_the_stage_and_shows_its_output(tmp_path):
+    summary = tmp_path / "summary.md"
+    run(make_stub_project(tmp_path / "p"), "--skip-download", GITHUB_STEP_SUMMARY=str(summary), STUB_FAIL="alerts")
+    text = summary.read_text()
+    assert "## Pipeline failed" in text
+    assert "Failed at `check/alerts`" in text
+    assert "stub alerts FAILS" in text

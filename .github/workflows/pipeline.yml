@@ -1,0 +1,81 @@
+# Pipeline: every day, download the newest MBTA, alert, and weather data, rebuild the warehouse,
+# run every data-quality check, and export the website's data files.
+#
+# It runs on a schedule and also whenever you press "Run workflow" on the Actions page.
+# The actions below are pinned to an exact commit, with the version beside it, as in ci.yml.
+name: Pipeline
+
+on:
+  schedule:
+    # Every day at 09:17 UTC (04:17 or 05:17 in Boston). Cron always uses UTC. The odd minute is
+    # deliberate: GitHub is busiest at the top of the hour and delays jobs scheduled then.
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+    inputs:
+      fresh:
+        description: "Ignore the saved downloads and download everything again"
+        type: boolean
+        default: false
+
+# This workflow may only read the repository. It cannot change it or publish anything.
+permissions:
+  contents: read
+
+# Never run two pipelines at once, and never cancel one that is already running.
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Download, build, check, export
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Get the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv, the tool that manages this project's Python packages
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+
+      - name: Install the exact package versions from uv.lock
+        run: uv sync --locked --no-dev
+
+      # The trip files are the bulk of the download (about 650 MB). GitHub keeps a saved copy
+      # between runs, so a normal run only fetches the newest day or two. Each run saves a new
+      # copy under its own name and restores the most recent one, whatever its name.
+      - name: Restore the saved trip downloads
+        if: ${{ !inputs.fresh }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: data/raw/lamp
+          key: raw-lamp-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            raw-lamp-
+
+      - name: Run the pipeline
+        env:
+          MBTA_API_KEY: ${{ secrets.MBTA_API_KEY }}
+        run: uv run python pipeline/run.py
+
+      # Save the downloads even if a later stage failed, so the next run does not start over.
+      - name: Save the trip downloads for the next run
+        if: ${{ !cancelled() }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: data/raw/lamp
+          key: raw-lamp-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # Keep the run record and the exported files, including when the run failed.
+      - name: Keep the run record and exported files
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pipeline-output
+          path: exports/
+          retention-days: 30
+          if-no-files-found: warn

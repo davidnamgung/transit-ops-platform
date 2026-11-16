@@ -1,10 +1,12 @@
 """Shared helpers for downloading LAMP files. Imported by other scripts."""
+import os
 import time
 from pathlib import Path
 
 import requests
 
-BASE = "https://performancedata.mbta.com/lamp/subway-on-time-performance-v1"
+# The address can be overridden with LAMP_BASE_URL; the tests use that to talk to a small local server.
+BASE = os.environ.get("LAMP_BASE_URL", "https://performancedata.mbta.com/lamp/subway-on-time-performance-v1")
 OUT_DIR = Path("data/raw/lamp")
 MAX_MB = 500  # safety limit per file
 

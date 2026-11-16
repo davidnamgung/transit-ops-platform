@@ -129,6 +129,28 @@ def write_record(record):
     tmp.rename(RECORD)  # write fully, then rename
 
 
+def write_github_summary(record):
+    """On GitHub, show the run as a small report at the top of the run page (a no-op elsewhere)."""
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path:
+        return
+    lines = [f"## Pipeline {record['status']} in {record['duration_sec']} seconds", ""]
+    lines += ["| Stage | Result | Seconds |", "| --- | --- | --- |"]
+    lines += [f"| {s['group']}/{s['name']} | {s['status']} | {s['seconds']} |" for s in record["stages"]]
+    facts = record.get("facts") or {}
+    if facts and "unavailable" not in facts:
+        lines += ["", f"**Data:** {facts['stop_events']:,} stop events on {facts['days_with_data']} days "
+                      f"({facts['first_service_date']} to {facts['last_service_date']}), "
+                      f"{facts['days_without_data']} days without data, {facts['alerts']:,} alerts, "
+                      f"{facts['episodes']} episodes."]
+    for name, c in record["checks"].items():
+        lines.append(f"- **{name} checks:** {c['passed']} passed, {c['warnings']} warnings, {c['failures']} failures")
+    if record["status"] == "failed":
+        lines += ["", f"Failed at `{record['failed_stage']}`. The last lines of its output:", "", "```", *record["log_tail"], "```"]
+    with open(path, "a") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run the whole pipeline.")
     parser.add_argument("--skip-download", action="store_true", help="reuse the raw files already on disk")
@@ -200,6 +222,7 @@ def main():
         "log_tail": tail,
     }
     write_record(record)
+    write_github_summary(record)
 
     print("=" * 60)
     for r in results:

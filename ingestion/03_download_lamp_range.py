@@ -11,7 +11,8 @@ Usage (run from the project folder):
     uv run python ingestion/03_download_lamp_range.py --prune     # also delete files older than the window
 
 Exit code: 0 when every day is either downloaded, already present, or genuinely not
-published; 1 when any download failed, so an automated run can stop and alert.
+published; 1 when any download failed or more than 20 days are "not published" (the
+pattern a blocked server would produce), so an automated run can stop and alert.
 """
 import argparse
 import sys
@@ -21,6 +22,7 @@ from datetime import date, timedelta
 from lamp_utils import BASE, OUT_DIR, download
 
 EMPTY_BYTES = 10_000
+MAX_MISSING = 20  # more unpublished days than this in one run is treated as a failure
 
 parser = argparse.ArgumentParser(description="Download a range of LAMP daily files.")
 parser.add_argument("--days", type=int, default=365, help="how many days to fetch")
@@ -80,7 +82,8 @@ if empty:
     print("Published but EMPTY (zero rows):", empty)
 if failed:
     print("FAILED:", failed)
-if len(missing) > 20:
-    print(f"WARNING: {len(missing)} files not published in one run. That is unusual; "
-          "check whether the server is blocking us before trusting the gaps.")
-sys.exit(1 if failed else 0)
+too_many_missing = len(missing) > MAX_MISSING
+if too_many_missing:
+    print(f"FAILED: {len(missing)} files not published in one run (more than {MAX_MISSING}). A normal year has "
+          "about one. This pattern suggests the server is blocking us, so the gaps cannot be trusted.")
+sys.exit(1 if failed or too_many_missing else 0)

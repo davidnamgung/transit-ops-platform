@@ -1,0 +1,103 @@
+{
+ "schema": 1,
+ "repository": "davidnamgung/transit-ops-platform",
+ "updated_utc": "2026-11-16T21:31:27+00:00",
+ "runs": [
+  {
+   "run_id": "43960694573",
+   "trigger": "workflow_dispatch",
+   "started_utc": "2026-11-16T21:30:17+00:00",
+   "finished_utc": "2026-11-16T21:31:10+00:00",
+   "duration_sec": 53.8,
+   "status": "success",
+   "failed_stage": null,
+   "stages": [
+    {
+     "name": "download/trips",
+     "status": "ok",
+     "seconds": 8.6
+    },
+    {
+     "name": "download/weather",
+     "status": "ok",
+     "seconds": 0.9
+    },
+    {
+     "name": "download/alerts",
+     "status": "ok",
+     "seconds": 2.9
+    },
+    {
+     "name": "download/stations",
+     "status": "ok",
+     "seconds": 3.4
+    },
+    {
+     "name": "build/warehouse",
+     "status": "ok",
+     "seconds": 36.0
+    },
+    {
+     "name": "check/staging",
+     "status": "ok",
+     "seconds": 1.0
+    },
+    {
+     "name": "check/marts",
+     "status": "ok",
+     "seconds": 0.7
+    },
+    {
+     "name": "check/alerts",
+     "status": "ok",
+     "seconds": 0.1
+    },
+    {
+     "name": "check/freshness",
+     "status": "ok",
+     "seconds": 0.0
+    },
+    {
+     "name": "export/app files",
+     "status": "ok",
+     "seconds": 0.1
+    }
+   ],
+   "checks": {
+    "staging": {
+     "passed": 13,
+     "warnings": 0,
+     "failures": 0
+    },
+    "marts": {
+     "passed": 8,
+     "warnings": 1,
+     "failures": 0
+    },
+    "alerts": {
+     "passed": 7,
+     "warnings": 0,
+     "failures": 0
+    }
+   },
+   "freshness": {
+    "newest_service_date": "2026-11-09",
+    "age_days": 7,
+    "max_age_days": 12
+   },
+   "facts": {
+    "stop_events": 14536517,
+    "kept_events": 14514824,
+    "alerts": 22424,
+    "line_days": 2780,
+    "episodes": 101,
+    "first_service_date": "2025-11-10",
+    "last_service_date": "2026-11-09",
+    "days_with_data": 348,
+    "days_without_data": 17
+   },
+   "error_tail": [],
+   "run_url": "https://github.com/davidnamgung/transit-ops-platform/actions/runs/43960694573"
+  }
+ ]
+}

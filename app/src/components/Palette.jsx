@@ -26,6 +26,7 @@ export default function Palette({ model, onClose }) {
       { key: 'p-episodes', group: 'Pages', label: 'Episodes', hint: 'Closures, disruptions, and gaps', go: () => navigate(['episodes']) },
       { key: 'p-weather', group: 'Pages', label: 'Weather', hint: 'How rain and snow change service', go: () => navigate(['weather']) },
       { key: 'p-report', group: 'Pages', label: 'Report', hint: 'The analysis, with the evidence', go: () => navigate(['report']) },
+      { key: 'p-health', group: 'Pages', label: 'Health', hint: 'Is the pipeline running, and how fresh is the data?', go: () => navigate(['health']) },
       { key: 'p-method', group: 'Pages', label: 'Method', hint: 'How the pipeline was built and checked', go: () => navigate(['method']) },
     ];
     if (!model) return pages;

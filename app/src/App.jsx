@@ -11,6 +11,7 @@ import Episodes from './pages/Episodes.jsx';
 import Weather from './pages/Weather.jsx';
 import Report from './pages/Report.jsx';
 import Method from './pages/Method.jsx';
+import Health from './pages/Health.jsx';
 
 const NAV = [
   { id: '', label: 'Story', path: [] },
@@ -19,6 +20,7 @@ const NAV = [
   { id: 'episodes', label: 'Episodes', path: ['episodes'] },
   { id: 'weather', label: 'Weather', path: ['weather'] },
   { id: 'report', label: 'Report', path: ['report'] },
+  { id: 'health', label: 'Health', path: ['health'] },
   { id: 'method', label: 'Method', path: ['method'] },
 ];
 
@@ -76,6 +78,7 @@ function Routes({ model }) {
     case 'episodes': return <Episodes model={model} />;
     case 'weather': return <Weather model={model} />;
     case 'report': return <Report model={model} />;
+    case 'health': return <Health />;
     case 'method': return <Method model={model} />;
     default: return <Story model={model} />;
   }
@@ -83,6 +86,8 @@ function Routes({ model }) {
 
 function Body() {
   const data = useData();
+  const { segs } = useRoute();
+  if (segs[0] === 'health') return <Health />; // needs none of the year's data, so it works even when that failed to load
   if (data.status === 'loading') return <div className="page state"><p className="muted">Loading a year of service data…</p></div>;
   if (data.status === 'error') {
     return (

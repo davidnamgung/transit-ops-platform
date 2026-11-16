@@ -92,3 +92,8 @@ export const WEATHER_CATEGORIES = [
   { id: 'heavy_rain', label: 'Heavy rain', note: '2.5 mm or more that hour' },
   { id: 'snow', label: 'Snow', note: '0.1 cm or more of snowfall that hour' },
 ];
+
+// Where the pipeline publishes its run history (see pipeline/publish_health.sh). The Platform Health page
+// reads it straight from GitHub, so it is always current and does not depend on the site being rebuilt.
+export const REPO = 'davidnamgung/transit-ops-platform';
+export const HEALTH_URL = `https://raw.githubusercontent.com/${REPO}/pipeline-health/health.json`;

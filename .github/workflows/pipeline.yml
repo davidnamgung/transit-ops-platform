@@ -1,6 +1,7 @@
 # Pipeline: every day, download the newest MBTA, alert, and weather data, rebuild the warehouse,
 # run every data-quality check, and export the website's data files. If anything fails, send an
-# alert to Discord.
+# alert to Discord. Either way, record the run in the health history that the website's Platform
+# Health page shows.
 #
 # It runs on a schedule and also whenever you press "Run workflow" on the Actions page.
 # The actions below are pinned to an exact commit, with the version beside it, as in ci.yml.
@@ -93,6 +94,35 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python3 pipeline/notify.py
+
+  # A separate job, so that only this one is allowed to write to the repository, and so that it still
+  # runs when the pipeline job failed (a failure belongs in the history too).
+  health:
+    name: Record this run in the health history
+    needs: run
+    if: ${{ !cancelled() && !inputs.test_alert }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write   # only to add commits to the pipeline-health branch; nothing else is touched
+    steps:
+      - name: Get the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: true   # needed to push to the health branch
+          fetch-depth: 1
+
+      # The pipeline job leaves its run record here, including when it failed. If it failed before it
+      # could, there is nothing to download, and the history records a setup failure instead.
+      - name: Get this run's record
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: pipeline-output
+          path: exports
+
+      - name: Add this run to the health history
+        run: bash pipeline/publish_health.sh
 
   test-alert:
     name: Send a test alert

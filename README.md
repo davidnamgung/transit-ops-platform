@@ -47,7 +47,7 @@ I also tried to be honest about where the data misleads. The daily-rhythm chart 
 - **It runs itself.** A schedule on GitHub's free computers does everything every morning. Saved downloads make a normal run take about a minute, against 276 seconds from nothing.
 - **It fails safely.** A run that fails any check publishes nothing, so bad numbers never reach the site.
 - **It is tested like a smoke alarm.** 92 tests run on every push, and I verified the tests by deliberately breaking the code in more than forty ways and confirming a test fails each time. That found and fixed several tests that would have passed anyway.
-- **It is observable.** Discord alerts, a public [Platform Health page](https://davidnamgung.github.io/transit-ops-platform/#/health) fed by a run history, a [runbook](docs/runbook.md), and a failure drill I ran end to end.
+- **It is observable.** Discord alerts, a public [Platform Health page](https://davidnamgung.github.io/transit-ops-platform/#/health) fed by a run history, a [runbook](docs/runbook.md), and a [failure drill with a written postmortem](docs/postmortem-2026-11-drill.md) I ran end to end.
 - **It is reproducible.** For the same data, the daily and hourly tables produced identical checksums on a Mac (ARM, 8 threads) and on Linux (x86, 1 thread).
 - **It is hardened.** One run at a time, time limits, least-privilege permissions per job, every outside action pinned to an exact commit, and Dependabot proposing updates after a two-week wait.
 

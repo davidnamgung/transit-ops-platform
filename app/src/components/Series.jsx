@@ -62,10 +62,6 @@ export default function Series({
           {bars && bars.points.map((p) => p.v > 0 && (
             <rect key={p.x} x={x(p.x) - unit * 0.32} width={unit * 0.64} y={plotH - (p.v / barMax) * barH} height={(p.v / barMax) * barH} className="snow-bar" />
           ))}
-          {bars && (() => {
-            const top = bars.points.reduce((a, p) => (p.v > a.v ? p : a), { v: 0, x: 0 });
-            return top.v > 0 ? <text x={x(top.x)} y={plotH - (top.v / barMax) * barH - 6} textAnchor="middle" className="snow-text">{bars.format(top.v)}</text> : null;
-          })()}
           {thresholds.map((t) => (
             <g key={t.label} transform={`translate(0 ${y(t.y)})`}>
               <line x2={plotW} className="thresh-line" />
@@ -74,6 +70,11 @@ export default function Series({
           ))}
           {series.filter((s) => !s.hero).map((s) => <path key={s.id} d={ln(s.points)} className="s-line s-muted" />)}
           {series.filter((s) => s.hero).map((s) => <path key={s.id} d={ln(s.points)} className="s-line" style={{ stroke: color(s) }} />)}
+          {/* drawn after the lines so no line can cross over it */}
+          {bars && (() => {
+            const top = bars.points.reduce((a, p) => (p.v > a.v ? p : a), { v: 0, x: 0 });
+            return top.v > 0 ? <text x={x(top.x)} y={plotH - (top.v / barMax) * barH - 6} textAnchor="middle" className="snow-text">{bars.format(top.v)}</text> : null;
+          })()}
           {xTicks.map((t) => <text key={t.x} x={x(t.x)} y={plotH + 20} className="axis-text" textAnchor="middle">{t.label}</text>)}
           {marks.map((m, k) => (
             <g key={k} transform={`translate(${x(m.x)} 0)`}>

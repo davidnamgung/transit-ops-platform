@@ -3,7 +3,7 @@ import { DAY_TYPES, DAY_TYPE_ORDER, LINE_BY_ID } from '../lib/constants.js';
 import { FACTS } from '../lib/facts.js';
 import { dateRange, fmtDay, fmtMonthYear, minutes, n0, n1, pct0, pct1, plural, times } from '../lib/format.js';
 import { useTheme } from '../lib/hooks.js';
-import { addedByMonth, closureStory, countsByLine, delayAlertBuckets, hourlyCurves, longestEpisode, stormStory, totalCounts, weatherBars } from '../lib/story.js';
+import { addedByMonth, closureStory, countsByLine, delayAlertBuckets, hourlyCurves, longestEpisode, rhythmFacts, stormStory, totalCounts, weatherBars } from '../lib/story.js';
 import { Bullet } from '../components/Bullet.jsx';
 import CalendarHeat from '../components/CalendarHeat.jsx';
 import { dayTip } from '../components/DayTip.jsx';
@@ -55,6 +55,7 @@ export default function Report({ model }) {
   const curves = useMemo(() => hourlyCurves(model), [model]);
   const wb = useMemo(() => weatherBars(model), [model]);
   const buckets = useMemo(() => delayAlertBuckets(model), [model]);
+  const rhythm = useMemo(() => rhythmFacts(curves), [curves]);
   const open = (idx, line) => navigate(['explore'], { line, day: model.dayIso[idx] });
   const closures = useMemo(() => model.episodes.filter((e) => e.episode_type === 'planned_closure').sort((a, b) => b.n_days - a.n_days || a.startIdx - b.startIdx).slice(0, 8), [model]);
   const dry = wb.dry ? wb.dry.sum / wb.dry.n : null;
@@ -267,6 +268,11 @@ export default function Report({ model }) {
                 For the {n0(FACTS.schedule.comparableEvents)} arrivals that could be matched to a scheduled trip, the difference between actual and scheduled arrival had a median of {FACTS.schedule.medianSec} seconds late. The middle half of arrivals fell between {minutes(FACTS.schedule.p25Min)} and {minutes(FACTS.schedule.p75Min)}. The slowest 5% were more than {n1(FACTS.schedule.p95Min)} minutes late and the slowest 1% more than {n1(FACTS.schedule.p99Min)}.
               </p>
               <p>Looking at dry weekdays only removes weather from the picture and shows the daily rhythm of the system.</p>
+              {rhythm && rhythm.overnight && rhythm.dayHi && (
+                <p>
+                  The highest share of long gaps is overnight, not at rush hour: the {rhythm.c.label} reaches {pct0(rhythm.hi.y)} around {hourLabel(rhythm.hi.x)}. That hour holds only {n0(rhythm.hiN)} of the line’s {n0(rhythm.total)} weekday observations ({rhythm.hiShare < 0.1 ? 'under 0.1%' : pct1(rhythm.hiShare)}), and the data cannot say why gaps run long then, so it is better read as a sign of how irregular late-night service is than as a finding about riders. During service hours (6 am to 10 pm) the {rhythm.c.label} ranges from {pct0(rhythm.dayLo.y)} to {pct0(rhythm.dayHi.y)}, highest around {hourLabel(rhythm.dayHi.x)}.
+                </p>
+              )}
               <Figure title="Long gaps by hour, dry weekdays" lede="When during the day do trains come least often relative to the schedule?" guide="Each line is one subway line (the four Green branches combined). The vertical axis is the share of gaps between trains more than 1.5 times the schedule." takeaway="Look for the hours where lines separate or rise together: those are times when the schedule asks the most of the system.">
                 <Series
                   series={curves.map((c) => ({ id: c.id, label: c.label, css: c.css, hero: true, endLabel: c.label, points: c.points.map((p) => ({ x: p.x, y: p.y })) }))}

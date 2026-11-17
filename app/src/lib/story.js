@@ -148,6 +148,29 @@ export function hourlyCurves(model, { weekend = false, category = 'dry', field =
   });
 }
 
+// The line with the biggest swing through the day, plus context that keeps an overnight spike honest:
+// how little of the line's data that hour holds, and what the highest and lowest were during service hours.
+export function rhythmFacts(curves) {
+  const usable = curves.filter((c) => c.points.length > 6);
+  if (!usable.length) return null;
+  const scored = usable.map((c) => {
+    const hi = c.points.reduce((a, p) => (p.y > a.y ? p : a));
+    const lo = c.points.reduce((a, p) => (p.y < a.y ? p : a));
+    const total = c.points.reduce((s, p) => s + p.n, 0);
+    const day = c.points.filter((p) => p.x >= 6 && p.x <= 21);
+    return {
+      c, hi, lo, range: hi.y - lo.y,
+      hiShare: total ? (hi.n / total) * 100 : null,
+      hiN: hi.n,
+      total,
+      overnight: hi.x < 6 || hi.x > 21,
+      dayHi: day.length ? day.reduce((a, p) => (p.y > a.y ? p : a)) : null,
+      dayLo: day.length ? day.reduce((a, p) => (p.y < a.y ? p : a)) : null,
+    };
+  }).sort((a, b) => b.range - a.range);
+  return scored[0];
+}
+
 // Average long-gap share by kind of weather, all lines, weekdays and weekends together.
 export function weatherBars(model, { field = 'pct_headways_over_1_5x', weight = 'n_headways' } = {}) {
   const out = {};

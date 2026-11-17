@@ -4,7 +4,7 @@ import { FACTS } from '../lib/facts.js';
 import { dateRange, fmtDay, fmtMonthYear, minutes, n0, n1, pct0, pct1, times } from '../lib/format.js';
 import { prefersReducedMotion, useTheme } from '../lib/hooks.js';
 import { href, navigate } from '../lib/router.js';
-import { addedByMonth, closureStory, countsByLine, hourlyCurves, longestEpisode, stormStory, totalCounts, weatherBars } from '../lib/story.js';
+import { addedByMonth, closureStory, countsByLine, hourlyCurves, longestEpisode, rhythmFacts, stormStory, totalCounts, weatherBars } from '../lib/story.js';
 import { Bullet } from '../components/Bullet.jsx';
 import CalendarHeat from '../components/CalendarHeat.jsx';
 import { dayTip } from '../components/DayTip.jsx';
@@ -56,16 +56,7 @@ export default function Story({ model }) {
   }, [closure, model]);
 
   // ---- chapter 5
-  const rhythm = useMemo(() => {
-    const usable = curves.filter((c) => c.points.length > 6);
-    if (!usable.length) return null;
-    const scored = usable.map((c) => {
-      const hi = c.points.reduce((a, p) => (p.y > a.y ? p : a));
-      const lo = c.points.reduce((a, p) => (p.y < a.y ? p : a));
-      return { c, hi, lo, range: hi.y - lo.y };
-    }).sort((a, b) => b.range - a.range);
-    return scored[0];
-  }, [curves]);
+  const rhythm = useMemo(() => rhythmFacts(curves), [curves]);
 
   // ---- chapter 6
   const dry = wb.dry ? wb.dry.sum / wb.dry.n : null;
@@ -306,6 +297,11 @@ export default function Story({ model }) {
             <p>
               Looking only at dry weekdays, so that weather and closures do not blur the picture, the {rhythm.c.label} had the most long gaps around {hourLabel(rhythm.hi.x)} ({pct0(rhythm.hi.y)}) and the fewest around {hourLabel(rhythm.lo.x)} ({pct0(rhythm.lo.y)}).
             </p>
+            {rhythm.overnight && rhythm.dayHi && (
+              <p>
+                Be careful with that peak. {hourLabel(rhythm.hi.x)} is outside the hours when most trains run. It holds only {n0(rhythm.hiN)} of the {rhythm.c.label}’s {n0(rhythm.total)} weekday observations ({rhythm.hiShare < 0.1 ? 'under 0.1%' : pct1(rhythm.hiShare)}), so it rests on few trains. Between 6 am and 10 pm the highest was {pct0(rhythm.dayHi.y)}, around {hourLabel(rhythm.dayHi.x)}.
+              </p>
+            )}
             <p>
               For trains that can be matched to the schedule, the typical arrival was about a minute late ({FACTS.schedule.medianSec} seconds at the median), and half of all arrivals landed within {Math.round(FACTS.schedule.medianAbsSec / 60)} minutes of the timetable. Across {n0(FACTS.schedule.comparableEvents)} arrivals, the slowest 5% were more than {n0(Math.round(FACTS.schedule.p95Min))} minutes late.
             </p>
@@ -314,7 +310,7 @@ export default function Story({ model }) {
             title="Long gaps by hour of the day, dry weekdays"
             lede="At what times of day do trains come least often relative to the schedule?"
             guide="Each line is one subway line (the four Green branches are combined). The horizontal axis is the hour of the day. The vertical axis is the share of gaps between trains that were more than 1.5 times the scheduled gap: higher means riders waited longer than planned. Hours with very few trains are left out."
-            takeaway={`The swing is largest on the ${rhythm.c.label}: from ${pct0(rhythm.lo.y)} to ${pct0(rhythm.hi.y)} across the day.`}
+            takeaway={rhythm.overnight && rhythm.dayHi ? `During service hours the ${rhythm.c.label} ranges from ${pct0(rhythm.dayLo.y)} to ${pct0(rhythm.dayHi.y)}. The overnight spike to ${pct0(rhythm.hi.y)} rests on few trains.` : `The swing is largest on the ${rhythm.c.label}: from ${pct0(rhythm.lo.y)} to ${pct0(rhythm.hi.y)} across the day.`}
           >
             <Series
               series={curves.map((c) => ({ id: c.id, label: c.label, css: c.css, hero: true, endLabel: c.label, points: c.points.map((p) => ({ x: p.x, y: p.y })) }))}

@@ -564,3 +564,8 @@ p { margin: 0 0 14px; max-width: 64ch; }
 .health-detail > .small { margin-top: 18px; }
 .health-detail .bars { margin-bottom: 4px; }
 .health-facts { row-gap: 16px; }
+
+/* fixes from the real-data review */
+.snow-text { paint-order: stroke; stroke: var(--surface); stroke-width: 3.5px; stroke-linejoin: round; }
+.bar-row.simple { grid-template-columns: minmax(120px, 160px) minmax(80px, 1fr) 56px 170px; }
+.bar-n { white-space: nowrap; text-align: right; }

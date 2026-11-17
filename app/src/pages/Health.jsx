@@ -24,9 +24,9 @@ function Banner({ a }) {
   const newest = a.last?.freshness?.newest_service_date;
   const age = a.last?.freshness?.age_days;
   let line;
-  if (a.state === 'healthy') line = `The pipeline last ran ${fmtAgo(a.hoursSince)} and passed every check. The numbers on this site are built from data through ${newest || 'the latest day available'}.`;
+  if (a.state === 'healthy') line = `The pipeline last ran ${fmtAgo(a.hoursSince)} and passed every check. Its newest data runs through ${newest || 'the latest day available'}.`;
   else if (a.state === 'failing') {
-    line = `The latest run failed at ${a.last.failed_stage || 'an unknown stage'}, ${fmtAgo(a.hoursSince)}. ${a.lastSuccess ? `The data on the site is from the last good run, ${fmtAgo((Date.now() - Date.parse(a.lastSuccess.finished_utc)) / 3600000)}.` : 'There has been no successful run on record.'}`;
+    line = `The latest run failed at ${a.last.failed_stage || 'an unknown stage'}, ${fmtAgo(a.hoursSince)}. ${a.lastSuccess ? `The last good run was ${fmtAgo((Date.now() - Date.parse(a.lastSuccess.finished_utc)) / 3600000)}, and the site keeps showing that run’s data.` : 'There has been no successful run on record.'}`;
   } else if (a.state === 'stale') line = `The pipeline has not reported in ${Math.round(a.hoursSince)} hours, and it should run daily. GitHub may be running late, or scheduled runs may have been switched off (GitHub does that after 60 days without repository activity).`;
   else line = 'The history is empty. The first run appears here once the Pipeline workflow has finished on GitHub.';
   return (
@@ -250,6 +250,7 @@ export default function Health() {
             <ul className="plain">
               <li><strong>Every pipeline run adds a record.</strong> After each run, passed or failed, the workflow appends a short summary to a small file on a branch called <code>pipeline-health</code> in the <a className="link" href={`https://github.com/${REPO}`} target="_blank" rel="noreferrer">repository</a>. The page reads that file directly from GitHub, so it is current within about five minutes and does not depend on the site being rebuilt.</li>
               <li><strong>“Overdue” is judged in your browser.</strong> The page compares the time of the last run with your clock. If the schedule silently stops, no new record arrives and the page turns red by itself after {STALE_HOURS} hours.</li>
+              <li><strong>The site is rebuilt only after a run passes.</strong> A failed run leaves the previous version online, so a failure never puts bad numbers on the site. It shows up here and in a Discord message instead.</li>
               <li><strong>It keeps the last 90 runs.</strong> {state.skipped > 0 ? `${plural(state.skipped, 'entry', 'entries')} in the file could not be understood and ${state.skipped === 1 ? 'was' : 'were'} skipped. ` : ''}The history holds {plural(runs.length, 'run')} now.</li>
             </ul>
           </section>

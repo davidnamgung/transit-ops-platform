@@ -66,7 +66,7 @@ export default function Story({ model }) {
   const toc = [
     { id: 'normal', title: 'Most days were ordinary', line: `${pct0(normalPct)} of line-days had nothing unusual.` },
     closure && { id: 'closures', title: 'Planned work', line: `${n0(closure.closureEpisodes)} closures, the longest on the ${LINE_BY_ID[closure.ep.route_id].name} for ${n0(closure.ep.n_days)} days.` },
-    storm && { id: 'storms', title: 'Snow and recovery', line: `${n1(storm.snow)}&nbsp;cm on ${fmtDay(model.calendar[storm.stormIdx])}; ${storm.affected.length ? `${storm.affected.length} lines broke down.` : 'no line broke down.'}` },
+    storm && { id: 'storms', title: 'Snow and recovery', line: `${n1(storm.snow)}\u00a0cm on ${fmtDay(model.calendar[storm.stormIdx])}; ${storm.affected.length ? `${storm.affected.length} lines broke down.` : 'no line broke down.'}` },
     { id: 'gaps', title: 'Trips outside the schedule', line: `${pct0((FACTS.tripKinds.added / (FACTS.tripKinds.added + FACTS.tripKinds.scheduled + FACTS.tripKinds.nonrevenue)) * 100)} of recorded stops belong to unmatched trips.` },
     rhythm && { id: 'rhythm', title: 'A normal day', line: `Long gaps swing from ${pct0(rhythm.lo.y)} to ${pct0(rhythm.hi.y)} through the day.` },
     { id: 'weather', title: 'Weather', line: worstWeather ? `${worstWeather.label} had ${pct0(worstWeather.value)} long gaps against ${pct0(dry)} when dry.` : 'How rain and snow compare.' },

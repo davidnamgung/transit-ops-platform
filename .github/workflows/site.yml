@@ -1,0 +1,76 @@
+# Site: publish a change to the website's own code without rerunning the pipeline.
+#
+# Runs when files under app/ change on main (or when you press "Run workflow"). It rebuilds the website with the
+# new code and the data the live site is already showing, so the pipeline is not involved: the change is live in
+# about a minute. The daily pipeline run publishes fresh data separately.
+#
+# The actions below are pinned to an exact commit, with the version beside it, as in the other workflows.
+name: Site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "!app/**/*.md"
+      - ".github/workflows/site.yml"
+      - "pipeline/fetch_live_data.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Rebuild and publish the website
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write      # to publish to GitHub Pages
+      id-token: write   # GitHub Pages checks that the deployment really comes from this workflow
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Shared with the pipeline's deploy job, so two publishes never run at the same moment.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Get the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      # The data comes from the site as it is published now. If any file is missing or damaged this step
+      # fails and nothing is published, so a bad rebuild can never replace a good site.
+      - name: Get the data the live site is showing
+        run: python3 pipeline/fetch_live_data.py --base "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" --out exports
+
+      - name: Install the website's exact package versions
+        working-directory: app
+        run: npm ci
+
+      - name: Copy the data into the website
+        working-directory: app
+        run: npm run sync-data
+
+      - name: Build the website
+        working-directory: app
+        run: npm run build
+
+      - name: Package the website for GitHub Pages
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: app/dist
+
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

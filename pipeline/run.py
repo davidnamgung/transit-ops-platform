@@ -13,6 +13,8 @@ What it does, in order:
 
 A failed download or build stops the run at once. All the checks run even if one fails, so you
 see every problem together, and the export is skipped if any check failed.
+To practice handling a failure, set PIPELINE_INJECT_FAILURE to a stage name such as check/marts: that stage then fails on
+purpose, with a message that says so. Nothing else changes.
 The run always writes exports/pipeline_run.json (what happened, how long it took, how much data,
 how fresh) and exits with code 1 on any failure, so an automated job can alert.
 """
@@ -183,7 +185,12 @@ def main():
         print(f"== {label}")
         t0 = time.time()
         detail = {}
-        if cmd is None:
+        if os.environ.get("PIPELINE_INJECT_FAILURE") == label:
+            # A practice run: this stage is told to fail so you can see what a real failure looks like end to end.
+            lines = [f"SIMULATED FAILURE: {label} was told to fail on purpose (a practice run, not a real problem)."]
+            print(f"    {lines[0]}")
+            ok = False
+        elif cmd is None:
             try:
                 ok, detail = freshness()
             except Exception as err:

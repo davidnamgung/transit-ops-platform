@@ -23,6 +23,10 @@ on:
         description: "Only send a test alert to Discord; do not run the pipeline"
         type: boolean
         default: false
+      simulate_failure:
+        description: "Practice run: fail on purpose at the marts check, to see the alert, the Health page, and the runbook in action"
+        type: boolean
+        default: false
 
 # This workflow may only read the repository. It cannot change it or publish anything.
 permissions:
@@ -68,6 +72,8 @@ jobs:
       - name: Run the pipeline
         env:
           MBTA_API_KEY: ${{ secrets.MBTA_API_KEY }}
+          # Empty on a normal run. For a practice run, this one stage is told to fail on purpose.
+          PIPELINE_INJECT_FAILURE: ${{ inputs.simulate_failure && 'check/marts' || '' }}
         run: uv run python pipeline/run.py
 
       # Save the downloads even if a later stage failed, so the next run does not start over.
@@ -105,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write   # only to add commits to the pipeline-health branch; nothing else is touched
+      contents: write   # used only to add commits to the pipeline-health branch (the script pushes nowhere else)
     steps:
       - name: Get the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -140,6 +146,10 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    # Shared with site.yml (the quick-publish workflow), so two publishes never run at the same moment.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     steps:
       - name: Get the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -181,6 +191,23 @@ jobs:
       - name: Publish
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  # GitHub switches scheduled workflows off after 60 days without repository activity. Re-enabling the
+  # workflow resets that counter, so this does it every day. If it ever fails, nothing is lost today, and
+  # the Health page turns red if the schedule stops. See docs/runbook.md.
+  keepalive:
+    name: Keep the schedule switched on
+    needs: run
+    if: ${{ !cancelled() && !inputs.test_alert }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write   # only to re-enable this one workflow
+    steps:
+      - name: Re-enable this workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable pipeline.yml --repo "$GITHUB_REPOSITORY" || echo "::warning::Could not re-enable the schedule. It still runs today; see docs/runbook.md."
 
   test-alert:
     name: Send a test alert

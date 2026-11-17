@@ -161,3 +161,26 @@ def test_a_failed_run_summary_names_the_stage_and_shows_its_output(tmp_path):
     assert "## Pipeline failed" in text
     assert "Failed at `check/alerts`" in text
     assert "stub alerts FAILS" in text
+
+
+def test_a_practice_failure_makes_that_one_stage_fail_and_says_so(tmp_path):
+    result, record = run(make_stub_project(tmp_path), "--skip-download", PIPELINE_INJECT_FAILURE="check/marts")
+    st = status(record)
+    assert result.returncode == 1
+    assert st["check/marts"] == "failed"
+    assert st["check/staging"] == st["check/alerts"] == st["check/freshness"] == "ok"  # nothing else is affected
+    assert st["export/app files"] == "skipped"
+    assert record["failed_stage"] == "check/marts"
+    assert any("SIMULATED FAILURE" in line for line in record["log_tail"])
+
+
+def test_a_practice_failure_in_a_download_stops_the_run_like_a_real_one(tmp_path):
+    result, record = run(make_stub_project(tmp_path), PIPELINE_INJECT_FAILURE="download/trips")
+    st = status(record)
+    assert result.returncode == 1 and st["download/trips"] == "failed"
+    assert all(v == "skipped" for k, v in st.items() if k != "download/trips")
+
+
+def test_naming_a_stage_that_does_not_exist_changes_nothing(tmp_path):
+    result, record = run(make_stub_project(tmp_path), "--skip-download", PIPELINE_INJECT_FAILURE="check/nonsense")
+    assert result.returncode == 0 and record["status"] == "success"

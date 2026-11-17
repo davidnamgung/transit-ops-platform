@@ -15,6 +15,7 @@ const SECTIONS = [
   { id: 'metrics', label: 'The measures' },
   { id: 'labels', label: 'How a day gets its label' },
   { id: 'repro', label: 'Reproducibility' },
+  { id: 'automation', label: 'Automation and monitoring' },
   { id: 'app', label: 'How this site works' },
   { id: 'predictions', label: 'Predictions' },
   { id: 'next', label: 'Limits and what comes next' },
@@ -267,9 +268,37 @@ export default function Method({ model }) {
             <ul className="plain">
               <li><strong>Pinned versions.</strong> Python and JavaScript dependencies are locked to exact versions, because two library upgrades during the project broke working code.</li>
               <li><strong>A fingerprint.</strong> One script prints row counts and md5 checksums of the main tables. After any rebuild the checksums must match, which proves the results did not change.</li>
-              <li><strong>A thread-count test.</strong> The build accepts a setting to run on a single thread, to check that results do not depend on how many processor cores the machine has. The same check will run on the automation server.</li>
+              <li><strong>Identical on different machines.</strong> For the same data window, the daily and hourly tables produced identical checksums on a Mac (ARM processor, 8 threads) and on a Linux computer (x86 processor, 1 thread), both running DuckDB 2.0.0. A script, <code>checks/09_machine_fingerprint.py</code>, prints the checksums so anyone can repeat the comparison. The alert-based tables are left out of it on purpose, because the MBTA updates the alert file all day, so two builds made hours apart can legitimately differ there.</li>
               <li><strong>One command each.</strong> Download, build, check, and export are single commands, run from the project root.</li>
             </ul>
+          </section>
+
+          <section id="automation" className="doc-section">
+            <h2>Automation and monitoring</h2>
+            <p>
+              Everything above runs by itself every morning on GitHub’s free computers. There is no server to maintain and no bill. What makes that safe is mostly what happens when something goes wrong.
+            </p>
+            <ol className="steps">
+              <li><strong>A daily schedule.</strong> A workflow starts every day at 09:17 UTC. The odd minute is deliberate, because GitHub is busiest on the hour and delays jobs then. The same workflow has buttons for a manual run, a test alert, and a practice failure.</li>
+              <li><strong>Saved downloads.</strong> The 650 MB of daily trip files is kept between runs. A run that had to download everything took 276 seconds; a normal run, which fetches only the newest day or two, takes about a minute.</li>
+              <li><strong>One command.</strong> The whole pipeline is one script that stops at the first failed download or build, runs every data-quality check even if one fails so all the problems show together, skips the export if any check failed, and always writes a record of the run.</li>
+              <li><strong>An alert.</strong> If any step fails, a message goes to Discord naming the failing stage, with the last lines of its output and a link to the run. It never pings anyone, and the webhook address is a secret that is never printed.</li>
+              <li><strong>A run history.</strong> Every run, passed or failed, is added to a small file on a separate branch. A run that failed before it could write a record is added too, as a setup failure, so no failure goes missing. The Platform Health page reads that file live and judges whether a run is overdue using your own clock, so it turns red even if the schedule silently stops.</li>
+              <li><strong>Publishing only after a pass.</strong> The website is rebuilt and published only when every check passed. A failed run leaves the previous version online. A change to the website’s own code publishes separately, in about a minute, using the data the live site is already showing. That data is downloaded and checked first (valid, a list, enough rows), all or nothing, so a damaged set can never replace a good site.</li>
+              <li><strong>Safeguards.</strong> Only one run at a time. Time limits on every job. Each job holds only the permission it needs: the one job that can write to the repository is the one that records the run history, and its script pushes only to its own branch; nothing that runs the pipeline or publishes the site can change the repository. Every outside action is pinned to an exact commit, and Dependabot proposes updates two weeks after a release, so a bad release has time to be caught first.</li>
+            </ol>
+            <h3>The 60-day rule</h3>
+            <p>
+              GitHub switches scheduled workflows off in a public repository after 60 days without repository activity. A daily job re-enables the workflow, which community tools report resets that counter. GitHub’s documentation does not confirm the reset, so this is a safeguard and not a guarantee. The backstop is the Health page, which turns red after 36 hours, and the runbook, which explains the one-click fix.
+            </p>
+            <h3>Tested like the rest</h3>
+            <p>
+              The automation’s own code is tested against stand-ins: small web servers that play the MBTA, Discord, and the live site, and a throwaway git repository that plays GitHub. Each test was checked by deliberately breaking the code and confirming that a test fails. Over forty deliberate breakages were tried across the project, and the process found and fixed several tests that would have passed anyway.
+            </p>
+            <h3>Practicing a failure</h3>
+            <p>
+              A “practice run” button makes the pipeline fail on purpose at one named stage, with a message saying so. It produces a real alert, a real red square on the Health page, and a real incident entry, while publishing nothing, so a first failure is never a first encounter. The runbook, in the repository’s <code>docs</code> folder, lists every stage’s likely causes and fixes.
+            </p>
           </section>
 
           <section id="app" className="doc-section">
@@ -294,8 +323,6 @@ export default function Method({ model }) {
           <section id="next" className="doc-section">
             <h2>Limits and what comes next</h2>
             <ol className="steps">
-              <li><strong>Automation.</strong> Scheduled downloads, rebuilds, and checks on a free runner, with alerts when something fails and the fingerprint compared with a stored baseline.</li>
-              <li><strong>A platform health page</strong> showing pipeline uptime, data freshness, check results, and incidents.</li>
               <li><strong>Moving to dbt</strong> so the build order, tests, and documentation are generated, after a short compatibility test with this DuckDB version.</li>
               <li><strong>Forecasting</strong> as planned, scored against its baseline.</li>
               <li><strong>Per-station results,</strong> which need a new table and a way to attribute delays to places.</li>

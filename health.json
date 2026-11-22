@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "repository": "davidnamgung/transit-ops-platform",
- "updated_utc": "2026-11-21T23:42:44+00:00",
+ "updated_utc": "2026-11-22T17:08:37+00:00",
  "runs": [
   {
    "run_id": "43960694573",
@@ -1151,6 +1151,102 @@
    },
    "error_tail": [],
    "run_url": "https://github.com/davidnamgung/transit-ops-platform/actions/runs/44963020849"
+  },
+  {
+   "run_id": "45047632800",
+   "trigger": "schedule",
+   "started_utc": "2026-11-22T17:07:31+00:00",
+   "finished_utc": "2026-11-22T17:08:22+00:00",
+   "duration_sec": 50.7,
+   "status": "success",
+   "failed_stage": null,
+   "stages": [
+    {
+     "name": "download/trips",
+     "status": "ok",
+     "seconds": 7.8
+    },
+    {
+     "name": "download/weather",
+     "status": "ok",
+     "seconds": 1.0
+    },
+    {
+     "name": "download/alerts",
+     "status": "ok",
+     "seconds": 2.5
+    },
+    {
+     "name": "download/stations",
+     "status": "ok",
+     "seconds": 3.4
+    },
+    {
+     "name": "build/warehouse",
+     "status": "ok",
+     "seconds": 34.1
+    },
+    {
+     "name": "check/staging",
+     "status": "ok",
+     "seconds": 1.0
+    },
+    {
+     "name": "check/marts",
+     "status": "ok",
+     "seconds": 0.7
+    },
+    {
+     "name": "check/alerts",
+     "status": "ok",
+     "seconds": 0.1
+    },
+    {
+     "name": "check/freshness",
+     "status": "ok",
+     "seconds": 0.0
+    },
+    {
+     "name": "export/app files",
+     "status": "ok",
+     "seconds": 0.2
+    }
+   ],
+   "checks": {
+    "staging": {
+     "passed": 12,
+     "warnings": 1,
+     "failures": 0
+    },
+    "marts": {
+     "passed": 8,
+     "warnings": 1,
+     "failures": 0
+    },
+    "alerts": {
+     "passed": 7,
+     "warnings": 0,
+     "failures": 0
+    }
+   },
+   "freshness": {
+    "newest_service_date": "2026-11-15",
+    "age_days": 7,
+    "max_age_days": 12
+   },
+   "facts": {
+    "stop_events": 14477582,
+    "kept_events": 14456250,
+    "alerts": 22515,
+    "line_days": 2779,
+    "episodes": 98,
+    "first_service_date": "2025-11-16",
+    "last_service_date": "2026-11-15",
+    "days_with_data": 348,
+    "days_without_data": 17
+   },
+   "error_tail": [],
+   "run_url": "https://github.com/davidnamgung/transit-ops-platform/actions/runs/45047632800"
   }
  ]
 }

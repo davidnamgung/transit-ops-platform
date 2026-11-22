@@ -21,7 +21,7 @@ export default function Palette({ model, onClose }) {
 
   const all = useMemo(() => {
     const pages = [
-      { key: 'p-story', group: 'Pages', label: 'Story', hint: 'What happened this year, and why', go: () => navigate([]) },
+      { key: 'p-story', group: 'Pages', label: 'Overview', hint: 'The year in brief, then the story', go: () => navigate([]) },
       { key: 'p-explore', group: 'Pages', label: 'Explore', hint: 'Every day on every line', go: () => navigate(['explore']) },
       { key: 'p-episodes', group: 'Pages', label: 'Episodes', hint: 'Closures, disruptions, and gaps', go: () => navigate(['episodes']) },
       { key: 'p-weather', group: 'Pages', label: 'Weather', hint: 'How rain and snow change service', go: () => navigate(['weather']) },

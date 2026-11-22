@@ -4,8 +4,11 @@ import { FACTS } from '../lib/facts.js';
 import { dateRange, fmtDay, fmtMonthYear, minutes, n0, n1, pct0, pct1, times } from '../lib/format.js';
 import { prefersReducedMotion, useTheme } from '../lib/hooks.js';
 import { href, navigate } from '../lib/router.js';
-import { addedByMonth, closureStory, countsByLine, hourlyCurves, longestEpisode, rhythmFacts, stormStory, totalCounts, weatherBars } from '../lib/story.js';
+import { overviewFacts } from '../lib/overview.js';
+import { addedByMonth, closureOthers, closureStory, countsByLine, hourlyCurves, longestEpisode, rhythmFacts, stormStory, totalCounts, weatherBars } from '../lib/story.js';
 import { Bullet } from '../components/Bullet.jsx';
+import { BuildStrip, Direction, KpiGrid, SummaryText } from '../components/Overview.jsx';
+import PdfButton from '../components/PdfButton.jsx';
 import CalendarHeat from '../components/CalendarHeat.jsx';
 import { dayTip } from '../components/DayTip.jsx';
 import { Figure } from '../components/Figure.jsx';
@@ -26,6 +29,7 @@ const WEATHER = [
 export default function Story({ model }) {
   const { theme } = useTheme();
   const byLine = useMemo(() => countsByLine(model), [model]);
+  const facts = useMemo(() => overviewFacts(model), [model]);
   const all = useMemo(() => totalCounts(byLine), [byLine]);
   const closure = useMemo(() => closureStory(model), [model]);
   const storm = useMemo(() => stormStory(model), [model]);
@@ -42,18 +46,7 @@ export default function Story({ model }) {
   const share = (t) => (all.unusual ? (all.counts[t] / all.unusual) * 100 : 0);
 
   // ---- chapter 2
-  const closureOthers = useMemo(() => {
-    if (!closure) return null;
-    const vals = [];
-    for (const id of model.routes) {
-      if (id === closure.ep.route_id) continue;
-      for (let i = closure.ep.startIdx; i <= closure.ep.endIdx; i++) {
-        const v = model.byLine.get(id)[i]?.volume_vs_typical;
-        if (v != null) vals.push(v);
-      }
-    }
-    return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
-  }, [closure, model]);
+  const others = useMemo(() => closureOthers(model, closure), [closure, model]);
 
   // ---- chapter 5
   const rhythm = useMemo(() => rhythmFacts(curves), [curves]);
@@ -76,16 +69,27 @@ export default function Story({ model }) {
   return (
     <div className="page story">
       <header className="hero">
+        <p className="eyebrow">Overview · {fmtMonthYear(model.start)} to {fmtMonthYear(model.end)} · data through {fmtDay(model.end)}</p>
         <h1 className="display">What happened on Boston’s subway this year, and why</h1>
-        <p className="lede hero-lede">
-          Every day on every line from {fmtMonthYear(model.start)} to {fmtMonthYear(model.end)}, sorted into ordinary days and exceptions. Below is the story the data tells, then the pipeline that produced it.
-        </p>
-        <div className="hero-actions">
-          <button type="button" className="btn btn-primary" onClick={() => scrollTo('normal')}>Read the story</button>
-          <a className="btn" href={href(['explore'])}>Explore every day</a>
-          <a className="btn" href={href(['report'])}>Read the report</a>
+        <div className="ov">
+          <div className="ov-main">
+            <SummaryText model={model} f={facts} />
+            <div className="hero-actions">
+              <button type="button" className="btn btn-primary" onClick={() => scrollTo('normal')}>Read the story</button>
+              <PdfButton />
+            </div>
+          </div>
+          <aside className="ov-side" aria-labelledby="ov-side-title">
+            <h2 id="ov-side-title" className="ov-side-title">The project at a glance</h2>
+            <Direction model={model} />
+          </aside>
         </div>
       </header>
+
+      <section className="ov-kpis" aria-label="Key figures">
+        <KpiGrid f={facts} />
+        <BuildStrip />
+      </section>
 
       <section className="hero-fig" aria-labelledby="cal-title">
         <div className="hero-fig-head">
@@ -166,7 +170,7 @@ export default function Story({ model }) {
             title={`${LINE_BY_ID[closure.ep.route_id].label}: service level around its longest closure`}
             lede="How many trains ran each day, compared with a usual day for that line?"
             guide={`The colored line is the ${LINE_BY_ID[closure.ep.route_id].name}’s service level: 1.0 is a usual day, 0.5 is half the usual number of train stops. The gray lines are the other lines over the same days. The violet band marks the closure.`}
-            takeaway={`During the closure the ${LINE_BY_ID[closure.ep.route_id].name} ran at ${times(closure.ep.avg_volume_vs_typical)} of its usual volume${closureOthers != null ? `, while the other lines averaged ${times(closureOthers)}` : ''}.`}
+            takeaway={`During the closure the ${LINE_BY_ID[closure.ep.route_id].name} ran at ${times(closure.ep.avg_volume_vs_typical)} of its usual volume${others != null ? `, while the other lines averaged ${times(others)}` : ''}.`}
           >
             <Series
               series={closure.series.map((s, k, arr) => ({
@@ -383,7 +387,7 @@ export default function Story({ model }) {
         <Figure title="What to keep in mind" lede="The five places the data is weaker than it looks.">
           <ul className="trust-list">
             <li><strong>{n0(model.gaps.length)} days have no data.</strong> The MBTA published an empty file for {FACTS.files.empty} of them and nothing for {FACTS.files.unpublished}. They show as hatched squares, never as zeros.</li>
-            <li><strong>About {pct0((FACTS.raw.duplicateRowsFlagged / FACTS.raw.stopEvents) * 100)} of records appeared twice.</strong> Mostly on the shared Green Line trunk. We keep the copy on the trip’s own line.</li>
+            <li><strong>About {pct1((FACTS.raw.duplicateRowsFlagged / FACTS.raw.stopEvents) * 100)} of records appeared twice.</strong> Mostly on the shared Green Line trunk. We keep the copy on the trip’s own line.</li>
             <li><strong>Non-passenger trains are excluded.</strong> {n0(FACTS.trips.nonrevenue)} trips ran with no passengers, mostly at dawn. Left in, they looked like trains running 9 to 18 hours early.</li>
             <li><strong>{pct0((FACTS.tripKinds.added / (FACTS.tripKinds.added + FACTS.tripKinds.scheduled + FACTS.tripKinds.nonrevenue)) * 100)} of stops cannot be compared with the schedule,</strong> so measures that need the timetable are reported only for matched trains.</li>
             <li><strong>One weather reading stands in for the whole network.</strong> It comes from a weather model, not a platform sensor.</li>

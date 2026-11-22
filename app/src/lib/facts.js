@@ -35,6 +35,8 @@ export const FACTS = {
   stations: 125,
   checks: { martChecks: 9, alertChecks: 7 },
   build: { tables: 12, megabytes: 3200, seconds: 70 },
+  // About the project itself. Update the test count when it changes (run `uv run pytest`).
+  project: { tests: 92 },
 };
 
 export const MODELS = [

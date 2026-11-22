@@ -25,7 +25,8 @@ export default function CalendarHeat({ model, routeId, metricId = 'type', theme,
   const left = lg ? 32 : 0;
   const top = lg ? 26 : 16;
   const gap = lg ? 3 : 1.5;
-  const cell = Math.max(4, Math.min(lg ? 24 : 14, Math.floor((width - left - gap * (nCols - 1)) / nCols)));
+  const fit = (width - left - gap * (nCols - 1)) / nCols;
+  const cell = Math.max(4, Math.min(lg ? 24 : 14, lg ? Math.floor(fit) : Math.floor(fit * 4) / 4));
   const pitch = cell + gap;
   const gridW = nCols * pitch - gap;
   const gridH = 7 * pitch - gap;
@@ -58,8 +59,8 @@ export default function CalendarHeat({ model, routeId, metricId = 'type', theme,
     model.calendar.forEach((d, i) => {
       if (i === 0 || d.getUTCDate() === 1) out.push({ col: Math.floor((i + offset) / 7), label: fmtMonth(d), year: d.getUTCFullYear(), jan: d.getUTCMonth() === 0 });
     });
-    return out.filter((m, k) => k === 0 ? (out[1] ? out[1].col - m.col >= 3 : true) : true);
-  }, [model, offset]);
+    return out.filter((m, k) => k === 0 ? (out[1] ? out[1].col - m.col >= (lg ? 3 : 5) : true) : true);
+  }, [model, offset, lg]);
 
   const locate = (e) => {
     const box = e.currentTarget.getBoundingClientRect();

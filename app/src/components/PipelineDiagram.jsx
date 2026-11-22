@@ -1,5 +1,5 @@
 // The whole pipeline in one picture. Drawn as SVG so it stays sharp and follows the theme.
-const COLS = [
+export const COLS = [
   { x: 0, title: 'Public sources', sub: 'Downloaded on a schedule', items: ['MBTA trip records', 'MBTA service alerts', 'Open-Meteo weather', 'MBTA station list'] },
   { x: 1, title: 'Raw files', sub: 'Saved untouched', items: ['One Parquet file per day', 'Alert history file', 'Weather and station JSON'] },
   { x: 2, title: 'Staging', sub: 'Clean and typed', items: ['Real timestamps', 'Trip kinds', 'Duplicates flagged', 'Alerts rebuilt'] },

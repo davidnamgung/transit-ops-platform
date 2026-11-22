@@ -12,9 +12,11 @@ import Weather from './pages/Weather.jsx';
 import Report from './pages/Report.jsx';
 import Method from './pages/Method.jsx';
 import Health from './pages/Health.jsx';
+import Print from './pages/Print.jsx';
+import PdfButton from './components/PdfButton.jsx';
 
 const NAV = [
-  { id: '', label: 'Story', path: [] },
+  { id: '', label: 'Overview', path: [] },
   { id: 'explore', label: 'Explore', path: ['explore'] },
   { id: 'lines', label: 'Lines', path: ['lines', 'Red'] },
   { id: 'episodes', label: 'Episodes', path: ['episodes'] },
@@ -45,13 +47,14 @@ function TopBar({ theme, toggleTheme }) {
           </ul>
         </nav>
         <div className="top-actions">
+          <PdfButton className="btn btn-quiet" label="PDF report" />
           <button type="button" className="btn btn-quiet" onClick={() => window.dispatchEvent(new CustomEvent('open-palette'))} aria-label="Search pages, lines, and episodes">
-            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.6" /><path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
             <span className="top-label">Search</span>
             <kbd>{isMac ? '⌘K' : 'Ctrl K'}</kbd>
           </button>
           <button type="button" className="btn btn-quiet" onClick={toggleTheme} aria-label={`Switch to ${theme === 'night' ? 'day' : 'night'} colors`}>
-            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
               {theme === 'night' ? (
                 <path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1Z" fill="currentColor" />
               ) : (
@@ -80,6 +83,7 @@ function Routes({ model }) {
     case 'report': return <Report model={model} />;
     case 'health': return <Health />;
     case 'method': return <Method model={model} />;
+    case 'print': return <Print model={model} />;
     default: return <Story model={model} />;
   }
 }
@@ -109,6 +113,7 @@ function PaletteHost({ onClose }) {
 export default function App() {
   const { theme, toggle } = useThemeState();
   const [palette, setPalette] = useState(false);
+  const printing = useRoute().segs[0] === 'print';
   useEffect(() => {
     const open = () => setPalette(true);
     const key = (e) => {
@@ -127,15 +132,17 @@ export default function App() {
   return (
     <ThemeContext.Provider value={{ theme, toggle }}>
       <DataProvider>
-        <a className="skip" href="#main">Skip to content</a>
-        <TopBar theme={theme} toggleTheme={toggle} />
+        {!printing && <a className="skip" href="#main">Skip to content</a>}
+        {!printing && <TopBar theme={theme} toggleTheme={toggle} />}
         <main className="main" id="main">
           <Body />
-          <footer className="foot">
-            Train and alert data: MBTA, used under the MassDOT Developers License Agreement. Weather: Open-Meteo.com. This project is independent and not affiliated with the MBTA.
-          </footer>
+          {!printing && (
+            <footer className="foot">
+              Train and alert data: MBTA, used under the MassDOT Developers License Agreement. Weather: Open-Meteo.com. This project is independent and not affiliated with the MBTA.
+            </footer>
+          )}
         </main>
-        {palette && <PaletteHost onClose={() => setPalette(false)} />}
+        {palette && !printing && <PaletteHost onClose={() => setPalette(false)} />}
         <TooltipLayer />
       </DataProvider>
     </ThemeContext.Provider>

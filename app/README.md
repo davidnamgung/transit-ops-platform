@@ -8,7 +8,7 @@ browser: coloring the calendars, filtering, the weather grid, search. There is n
 
 | Page | What it is for |
 | --- | --- |
-| Story | The year in seven short chapters. Every chart states its point, says how to read it, and says what it shows. The sentences are computed from the data. |
+| Overview | A computed summary and key figures at the top, then the year in seven short chapters. Every chart states its point, says how to read it, and says what it shows. The sentences are computed from the data. |
 | Explore | One square per day on each line. Pick a line and a measure, click a day to read every line on that day. |
 | Lines | One line at a time: its calendar, daily chart, a normal day by hour, a station map, and its episodes. |
 | Episodes | Every closure, disruption, and schedule gap on a timeline and in a table, with how each was labeled. |
@@ -38,6 +38,21 @@ almost always to re-run the export and `npm run sync-data`.
 npm run build        # writes the finished site to app/dist/
 npm run preview      # look at the finished site locally
 ```
+
+## The PDF report
+
+The "PDF report" button downloads `headway-report.pdf`, a six-page A4 report (summary, key figures, the charts, how it
+was built, how far to trust it). It is the page `#/print` of the site, printed by a headless Chromium, so it uses the same
+components and numbers as the site and cannot disagree with it. The publish workflows make it on every build.
+
+```
+npx playwright install chromium   # once per computer
+npm run build                     # the PDF is printed from the finished site
+npm run build:pdf                 # writes app/dist/headway-report.pdf
+```
+
+Without the file (for example under `npm run dev`) the button opens the same report as a printable page. The script
+refuses to write a PDF whose pages overflow or whose page count is wrong.
 
 ## Where things live
 

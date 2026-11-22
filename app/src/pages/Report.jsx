@@ -107,7 +107,7 @@ export default function Report({ model }) {
             <table className="kv-table">
               <tbody>
                 <tr><th scope="row">Train stop events</th><td>{n0(FACTS.raw.stopEvents)}</td><td className="muted">One row per train at one stop on one trip</td></tr>
-                <tr><th scope="row">Kept after removing duplicates</th><td>{n0(FACTS.raw.keptAfterDedupe)}</td><td className="muted">{n0(FACTS.raw.duplicateRowsFlagged)} rows ({pct0((FACTS.raw.duplicateRowsFlagged / FACTS.raw.stopEvents) * 100)}) flagged and set aside</td></tr>
+                <tr><th scope="row">Kept after removing duplicates</th><td>{n0(FACTS.raw.keptAfterDedupe)}</td><td className="muted">{n0(FACTS.raw.duplicateRowsFlagged)} rows ({pct1((FACTS.raw.duplicateRowsFlagged / FACTS.raw.stopEvents) * 100)}) flagged and set aside</td></tr>
                 <tr><th scope="row">Service alerts on the subway lines</th><td>{n0(FACTS.alerts.onOurLines)}</td><td className="muted">Rebuilt from {n0(FACTS.alerts.versions)} stored versions of {n0(FACTS.alerts.distinct)} alerts</td></tr>
                 <tr><th scope="row">Hours of weather</th><td>{n0(FACTS.weather.hours)}</td><td className="muted">Hourly for central Boston, no gaps</td></tr>
                 <tr><th scope="row">Stations</th><td>{n0(FACTS.stations)}</td><td className="muted">Names and coordinates from the MBTA API</td></tr>

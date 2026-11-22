@@ -16,8 +16,8 @@ export default function Series({
   const wrapRef = useRef(null);
   const width = useElementWidth(wrapRef) || 640;
   const [hover, setHover] = useState(null);
-  const R = endLabels ? 104 : 16;
-  const plotW = Math.max(240, width - M.l - R);
+  const R = endLabels ? (width < 480 ? 76 : 104) : 16;
+  const plotW = Math.max(120, width - M.l - R);
   const plotH = height - M.t - M.b;
   const x = useMemo(() => scaleLinear().domain(xDomain).range([0, plotW]), [xDomain, plotW]);
   const y = useMemo(() => scaleLinear().domain(yDomain).range([plotH, 0]), [yDomain, plotH]);

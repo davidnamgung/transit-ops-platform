@@ -52,6 +52,20 @@ export function closureStory(model) {
   return { ep, a, b, series, closureEpisodes: model.episodes.filter((e) => e.episode_type === 'planned_closure').length, totalDays };
 }
 
+// Average service level of every other line over the days of a closure (how the rest of the network fared).
+export function closureOthers(model, closure) {
+  if (!closure) return null;
+  const vals = [];
+  for (const id of model.routes) {
+    if (id === closure.ep.route_id) continue;
+    for (let i = closure.ep.startIdx; i <= closure.ep.endIdx; i++) {
+      const v = model.byLine.get(id)[i]?.volume_vs_typical;
+      if (v != null) vals.push(v);
+    }
+  }
+  return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+}
+
 // Storm figure: the snowiest day, how badly each line's gaps grew, and how long they took to recover.
 export function stormStory(model) {
   let stormIdx = -1;

@@ -172,7 +172,7 @@ export default function Method({ model }) {
               title="Duplicate records"
               noticed={`${n0(FACTS.raw.duplicateGroups)} groups of rows shared a trip, a stop position, and a day.`}
               evidence={`${n0(FACTS.raw.duplicateGroupsSpanningRoutes)} of them spanned two Green Line branches: on the shared trunk the same train is recorded under several branches. The first rule, keeping the alphabetically first route, kept the trip’s real route only 54% of the time.`}
-              did={`Keep the row on the route that holds most of the trip’s records, which is right ${pct0(FACTS.raw.keptMainRoutePct)} of the time. Other duplicates keep the earliest row. ${n0(FACTS.raw.duplicateRowsFlagged)} rows (${pct0((FACTS.raw.duplicateRowsFlagged / FACTS.raw.stopEvents) * 100)}) are flagged and set aside, not deleted.`}
+              did={`Keep the row on the route that holds most of the trip’s records, which is right ${pct0(FACTS.raw.keptMainRoutePct)} of the time. Other duplicates keep the earliest row. ${n0(FACTS.raw.duplicateRowsFlagged)} rows (${pct1((FACTS.raw.duplicateRowsFlagged / FACTS.raw.stopEvents) * 100)}) are flagged and set aside, not deleted.`}
             />
             <Entry
               title="Alerts are stored in versions"
@@ -309,6 +309,7 @@ export default function Method({ model }) {
             <ul className="plain">
               <li><strong>No server.</strong> The built site is plain files and can be hosted anywhere free.</li>
               <li><strong>Every view is a link.</strong> The address records the line, day, and measure, so a view can be shared.</li>
+              <li><strong>A PDF report.</strong> Every build also prints a six-page report from the same components and numbers, so the download always matches the site. If printing fails, the site still publishes and the button opens a printable page instead.</li>
               <li><strong>It checks its own data.</strong> On load it verifies the files and names any missing file or column, all at once.</li>
               <li><strong>The sentences are computed.</strong> Claims in the story, such as which closure was longest or which line recovered last, are calculated from the data, so they update when the data does. Figures that come from pipeline runs rather than the exported files (row counts, duplicate counts) live in one file and are labeled with the build they describe.</li>
               <li><strong>Accessibility.</strong> Every control works from the keyboard. Charts have text equivalents: the day table and the episode table list the same information as the calendars and the timeline. Color is never the only signal.</li>
